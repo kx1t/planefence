@@ -82,6 +82,7 @@ nano planefence.sh
 - `PLANEFENCEDIR` contains the directory name where planefency.py is located. If you followed the instructions above, you won't need to change this.
 - `MAXALT` contains the altitude ceiling in ft. `MAXALT=5000` means that only planes that are 5000 ft or lower are tracked
 - `DIST` contains the radius around your station in (statute) miles. It relies on your location to be set accurately in `socket30003.conf` as described in the setup instructions for that software package.
+- `LAT` and `LON` should be set to your approximate Latitude and Longitude. Note - these parameters ONLY affect the position shown on the web page. It does NOT recalculate the distance from your station for purposes of determining if an entry is close to your home. That should be set in `~/socket30003/socket30003.cfg` and will only change entries pro-actively.
 
 ### Create a cron job
 CRON is a Linux utility to schedule running a program at regular intervals. Once you execute the following command, the system will run
@@ -136,3 +137,4 @@ For reference, see (http://ramonk.net/planefence).
 Note that once there's at least 1 plane in the area, the table will render correctly.
 - The script isn't very friendly to changes to the directory naming conventions. Working on that too.
 - The catch-up script has the paths hardcoded. This is another thing that needs changing.
+- allow setting `LAT` and `LON` in the script to actually recalculate the distance from the station. Right now, it's only used for cosmetic purposes in rendering the webpage.
