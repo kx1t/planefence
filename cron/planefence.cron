@@ -1,0 +1,1 @@
+*/2 * * * * root /home/pi/planefence/planefence.sh 2>&1
