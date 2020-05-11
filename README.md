@@ -93,13 +93,14 @@ Note that this will take a reasonably high amount of processing power and disk I
 to update your *planefence* website, you can change it as follows:
 
 ```
-nano /etc/cron.d/planefence
+sudo nano /etc/cron.d/planefence
 ```
 
 By default, this document shows you the following line:
 `*/2 * * * * root /home/pi/planefence/planefence.sh 2>&1`
 
-The first few characters `*/2` indicate that the script should be run every 2nd minute. You can change this as follows:
+The first few characters `*/2` indicate that the script should be run every 2nd minute. You can change this frequence, just pick the appropriate line below and change the text in your document to match it.
+Note -- only pick ONE of the lines below. Don't copy all of them - that would make no sense!
 ```
 */5 * * * * root /home/pi/planefence/planefence.sh 2>&1  # every 5 minutes
 */10 * * * * root /home/pi/planefence/planefence.sh 2>&1 # every 10 minutes
@@ -128,4 +129,5 @@ For reference, see (http://ramonk.net/planefence).
 #Known Issues
 - The history of the map goes wild if there has been no plane within your filter as of today. I'll see if we can fix this soon.
 Note that once there's at least 1 plane in the area, the table will render correctly.
-- The script isn't very friendly to changes to the directory namine conventions. Working on that too.
+- The script isn't very friendly to changes to the directory naming conventions. Working on that too.
+- The catch-up script has the paths hardcoded. This is another thing that needs changing.
