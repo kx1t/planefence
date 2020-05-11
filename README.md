@@ -80,6 +80,8 @@ nano planefence.sh
 - Go to the lines between the dashed separators
 - `OUTFILEDIR` contains your *planefence directory* name. If you have a different name, change it there
 - `PLANEFENCEDIR` contains the directory name where planefency.py is located. If you followed the instructions above, you won't need to change this.
+- `MAXALT` contains the altitude ceiling in ft. `MAXALT=5000` means that only planes that are 5000 ft or lower are tracked
+- `DIST` contains the radius around your station in (statute) miles. It relies on your location to be set accurately in `socket30003.conf` as described in the setup instructions for that software package.
 
 ### Create a cron job
 CRON is a Linux utility to schedule running a program at regular intervals. Once you execute the following command, the system will run
