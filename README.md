@@ -98,11 +98,14 @@ nano /etc/cron.d/planefence
 
 By default, this document shows you the following line:
 `*/2 * * * * root /home/pi/planefence/planefence.sh 2>&1`
+
 The first few characters `*/2` indicate that the script should be run every 2nd minute. You can change this as follows:
-`*/5 * * * * root /home/pi/planefence/planefence.sh 2>&1` --> every 5 minutes
-`*/10 * * * * root /home/pi/planefence/planefence.sh 2>&1` --> every 10 minutes
-`*/30 * * * * root /home/pi/planefence/planefence.sh 2>&1` --> every 30 minutes
-`0 * * * * root /home/pi/planefence/planefence.sh 2>&1` --> every hour (on the hour exactly)
+```
+*/5 * * * * root /home/pi/planefence/planefence.sh 2>&1  # every 5 minutes
+*/10 * * * * root /home/pi/planefence/planefence.sh 2>&1 # every 10 minutes
+*/30 * * * * root /home/pi/planefence/planefence.sh 2>&1 # every 30 minutes
+0 * * * * root /home/pi/planefence/planefence.sh 2>&1    # every hour (on the hour exactly)
+```
 Note: [Here's a handy website](https://crontab.guru/) that allows you to determine what to set the Crontab to for the frequency you want
 
 Once done, exit with CTRL-o (to save your changes) CTRL-x
