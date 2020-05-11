@@ -21,6 +21,9 @@
 	PLANEFENCEDIR="/home/pi/socket30003/"
 	MAXALT=5000
 	DIST=2
+	LAT=42.40487
+	LON=-71.16615
+#
 #
 # Only change the variables below if you know what you are doing.
 # Specifically
@@ -33,7 +36,7 @@
 # -----------------------------------------------------------------------------------
 
 # First, run planefence.py to create the HTML and CSV files:
-   $PLANEFENCEDIR/planefence.py --logfile=$LOGFILEBASE --today --outfile=$OUTFILEBASE --format=both --maxalt=$MAXALT --dist=$DIST
+   $PLANEFENCEDIR/planefence.py --logfile=$LOGFILEBASE --today --outfile=$OUTFILEBASE --format=both --maxalt=$MAXALT --dist=$DIST --lat=$LAT --lon=$LON
 
 # Now link index.html to today's file:
    ln -sf $OUTFILETODAY $OUTFILEDIR/index.html
