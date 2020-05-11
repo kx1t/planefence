@@ -114,6 +114,9 @@ Note: [Here's a handy website](https://crontab.guru/) that allows you to determi
 Once done, exit with CTRL-o (to save your changes) CTRL-x
 
 ## catchup.sh
+
+***Note this is a work in progress - this script needs adapting and probably won't (yet) work in its current state***
+
 This script will do a "catch-up" run. It will iterate through all `/tmp/dump1090*.txt` files and create heatmaps for them.
 If you changed any directories, please make sure to update this script to reflect this.
 The script must be run from the same directory where `planefence.py` is located.
