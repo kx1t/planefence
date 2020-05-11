@@ -27,7 +27,7 @@ def main(argv):
    now = now_utc.astimezone(get_localzone())
 
    try:
-      opts, args = getopt.getopt(argv,'',["h","help","?","distance=","dist=","log=","logfile=","v","verbose","outfile=","maxalt=","format=","today"])
+      opts, args = getopt.getopt(argv,'',["h","help","?","distance=","lat=","long=","dist=","log=","logfile=","v","verbose","outfile=","maxalt=","format=","today"])
    except getopt.GetoptError:
       print 'ERROR. Usage: distance.py [--verbose] --distance=<distance_in_km> --logfile=/path/to/logfile'
       sys.exit(2)
@@ -40,10 +40,10 @@ def main(argv):
          print 'Also, format is NOT defined, and outfile has the extention .htm or .html, the output will be written as an html table. Any other outfile extension will be written as CSV'
 	 print 'If format is defined, it will add the appropriate extention(s) to outfile.'
 	 print 'If --today is used, the logfile is assumed to be the base format for logs, and we will attempt to oick today\'s log.'
-      # elif opt == "--lat":
-         # lat = arg
-      # elif opt =="--lon":
-         # lon = arg
+      elif opt == "--lat":
+         lat = arg
+      elif opt =="--lon":
+         lon = arg
       elif opt in ("--logfile", "--log"):
          logfile = arg
       elif opt in ("--distance", "--dist"):
