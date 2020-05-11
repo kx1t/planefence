@@ -58,7 +58,7 @@ If you followed the `socket30003` install instructions to the letter and you did
 cp scripts/* /home/pi/sock30003
 ```
 
-### Install the python dependencies
+### Install the P  ython dependencies
 Planefence uses Python2.7, which comes standard with your Raspberry Pi on Stretch and Buster. However, there are a few modules that we need to install.
 Type the following:
 
@@ -90,7 +90,7 @@ sudo cp ~/git/planefence/cron/planefence.cron /etc/cron.d/planefence
 ```
 
 Note that this will take a reasonably high amount of processing power and disk I/O. If your don't mind a less frequent interval
-to update your *planefence* website, you can change it as follows:
+to update your PlaneFence website, you can change it as follows:
 
 ```
 sudo nano /etc/cron.d/planefence
@@ -126,7 +126,7 @@ Once you have rendered at least 1 PlaneFence, you can find it at `http://<addres
 Replace `<address_of_rpi>` with whatever the address is you normally use to get to the SkyAware or Dump1090 map.
 For reference, see (http://ramonk.net/planefence).
 
-#Known Issues
+# Known Issues
 - The history of the map goes wild if there has been no plane within your filter as of today. I'll see if we can fix this soon.
 Note that once there's at least 1 plane in the area, the table will render correctly.
 - The script isn't very friendly to changes to the directory naming conventions. Working on that too.
