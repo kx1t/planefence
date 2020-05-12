@@ -28,16 +28,16 @@
 	HTMLDIR=/usr/share/dump1090-fa/html/planefence
 # HEADR determines the tags for each of the fields in the Tweet:
 	HEADR=("ICAO" "FLIGHT" "START TIME" "END TIME" "MIN ALT (ft)" "MIN DIST (miles)" "LINK")
-# CSVFILE termines which file name we need to look in. We're using the 'date' command to 
+# CSVFILE termines which file name we need to look in. We're using the 'date' command to
 # get a filename in the form of 'planefence-200504.csv' where 200504 is yymmdd
 	TODAYCSV=$(date -d today +"planefence-%y%m%d.csv")
 	YSTRDAYCSV=$(date -d yesterday +"planefence-%y%m%d.csv")
 # TWURLPATH is where we can find TWURL. This only needs to be filled in if you can't get it
 # as part of the default PATH:
-TWURLPATH=/home/pi/.rbenv/shims
+	if [ ! `which twurl` ]; then TWURLPATH=/home/pi/.rbenv/shims ; fi
 # SLEEPTIME determine how long (in seconds) we wait after checking and (potentially) tweeting
 # before we check again:
-SLEEPTIME=60
+	SLEEPTIME=60
 # -----------------------------------------------------------------------------------
 # From here on, it is code execution:
 
