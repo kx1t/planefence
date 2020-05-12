@@ -58,7 +58,7 @@ If you followed the `socket30003` install instructions to the letter and you did
 cp scripts/* /home/pi/sock30003
 ```
 
-### Install the P  ython dependencies
+### Install the Python dependencies
 Planefence uses Python2.7, which comes standard with your Raspberry Pi on Stretch and Buster. However, there are a few modules that we need to install.
 Type the following:
 
