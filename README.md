@@ -132,9 +132,17 @@ Once you have rendered at least 1 PlaneFence, you can find it at `http://<addres
 Replace `<address_of_rpi>` with whatever the address is you normally use to get to the SkyAware or Dump1090 map.
 For reference, see (http://ramonk.net/planefence).
 
+# Optional - Tweeting Your Updates
+Once you have PlaneFence completely up and running, you can add an option to send a Tweet for every overflying plane.
+The setup of this is a bit complicated as you will have to register your own Twitter Developer Account, and get a 
+App Key for your application.
+Luckily, I wrote detailed installation instructions that can be accessed here:
+https://github.com/kx1t/planefence/blob/master/README-twitter.md
+
+If you want to see an example of how this works, go here: https://twitter.com/PlaneBoston
+
 # Known Issues
-- The history of the map goes wild if there has been no plane within your filter as of today. I'll see if we can fix this soon.
-Note that once there's at least 1 plane in the area, the table will render correctly.
+- The history of the map goes wild if there has been no plane within your filter as of today. I'll see if we can fix this soon. Note that once there's at least 1 plane in the area, the table will render correctly.
 - The script isn't very friendly to changes to the directory naming conventions. Working on that too.
 - The catch-up script has the paths hardcoded. This is another thing that needs changing.
 - allow setting `LAT` and `LON` in the script to actually recalculate the distance from the station. Right now, it's only used for cosmetic purposes in rendering the webpage.
