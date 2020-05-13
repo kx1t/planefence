@@ -9,6 +9,21 @@
 # distribution of this package, and are also available here:
 # https://github.com/kx1t/planefence/
 #
+#
+# Summary of Licelnse Terms
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
 # The package contains parts of, and modifications or derivatives to the following:
 # Dump1090.Socket30003 by Ted Sluis: https://github.com/tedsluis/dump1090.socket30003
 # These packages may incorporate other software and license terms.
