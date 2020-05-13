@@ -22,6 +22,8 @@ def main(argv):
    outfile = '/dev/stdout'
    outformat = ''
    tday = False
+   goodcount=0
+   badcount=0
 
    now_utc = datetime.now(timezone('UTC'))
    now = now_utc.astimezone(get_localzone())
@@ -58,7 +60,6 @@ def main(argv):
 	 outformat = arg
       elif opt == "--today":
 	 tday = True
- 
 
    if verbose == 1:
       # print 'lat = ', lat
@@ -93,6 +94,7 @@ def main(argv):
 
    lat1 = math.radians(float(lat))
    lon1 = math.radians(float(lon))
+
 # now we open the logfile
 # and we parse through each of the lines
 #
@@ -117,7 +119,7 @@ def main(argv):
 	  dlat = lat2 - lat1
 	  dlon = lon2 - lon1
 	  a = math.sin(dlat / 2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2)**2
-	  rowdist = 7920 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+	  rowdist = 7917.5 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
        except:
           rowdist=float("999999")
        try:
@@ -125,7 +127,18 @@ def main(argv):
        except:
 	  rowalt=float("999999")
 
-       # print rowdist
+       if verbose == 1:
+	  try:
+	     printdist=float(row[7]) * 1.150779448
+	  except:
+	     printdist=float("999999")
+	  if printdist / rowdist < .9 or rowdist / printdist < .9:
+	     badcount = badcount + 1
+	     lofc = math.acos(math.sin(lat1)*math.sin(lat2)+math.cos(lat1)*math.cos(lat2)*math.cos(lon2-lon1))*3963
+	     print "Distance diff >10Pct: H-calc Diff %%:", int(100*(1-(printdist / rowdist))), "LofC-calc Diff %%:", int(100*(1-(printdist/lofc))), "Reported:", printdist, "H-calc:", rowdist, "(", 100*round(float(badcount)/float(goodcount), 2), "of", int(badcount + goodcount)
+	  else:
+	     goodcount = goodcount + 1
+
        # now check if it's a duplicate that is in range
        if row[0] in records and rowdist <= dist and rowalt <= maxalt:
 	  # first check if we already have a flight number. If we don't, there may be one in the updated record we could use?
