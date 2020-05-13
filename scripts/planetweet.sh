@@ -78,7 +78,7 @@
 
 		# We compare only the first field to see if the old ICAO HEX code is different from the new one
 		# If so, we must tweet!
-		if [ "${OLDPLN[0]}" != "${NEWPLN[0]}" ];
+		if [ "${OLDPLN[0]}" != "${NEWPLN[0]}" ] && [ "$NEWPLANE" != "nothing" ] ;
 		then
 			# Create a Tweet with the first 6 fields, each of them followed by a Newline character
 			TWEET=""
