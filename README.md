@@ -2,7 +2,8 @@
 Collection of scripts using Socket30003 logs to create a list of aircraft that fly low over your location
 Copyright 2020 by Ramon F. Kolb - Licensed under GPL3.0 - see separate license file.
 
-For an example, see http://ramonk.net/heatmap
+For an example, see http://ramonk.net/planefence
+
 
 ## Attributions, inclusions, and prerequisites
 
