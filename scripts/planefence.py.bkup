@@ -1,10 +1,10 @@
 #!/usr/bin/python
 
-import sys, getopt, csv, os, HTMLParser, math
-import pandas as pd
-import numpy as  np
+import sys, getopt, csv, os, HTMLParser
+import pandas as pd 
+import numpy as  np 
 from datetime import datetime
-from datetime import datetime
+from datetime import datetime 
 from pytz import timezone
 from tzlocal import get_localzone
 
@@ -91,8 +91,6 @@ def main(argv):
       else:
 	 outformat = 'both'
 
-   lat1 = math.radians(float(lat))
-   lon1 = math.radians(float(lon))
 # now we open the logfile
 # and we parse through each of the lines
 #
@@ -108,16 +106,7 @@ def main(argv):
        # first safely convert the distance and altitude values from the row into a float.
        # if we can't convert it into a number (e.g., it's text, not a number) then substitute it by some large number
        try:
-          # rowdist=float(row[7]) * 1.15078
-	  # use haversine formula instead of the  distance field
-	  # this enables the use of locations other than the station itself
-	  # subject to the receiver's range of course
-	  lat2 = math.radians(float(row[2]))
-	  lon2 = math.radians(float(row[3]))
-	  dlat = lat2 - lat1
-	  dlon = lon2 - lon1
-	  a = math.sin(dlat / 2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2)**2
-	  rowdist = 7920 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+          rowdist=float(row[7]) * 1.15078
        except:
           rowdist=float("999999")
        try:

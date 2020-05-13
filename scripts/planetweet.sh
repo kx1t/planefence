@@ -38,9 +38,18 @@
 # SLEEPTIME determine how long (in seconds) we wait after checking and (potentially) tweeting
 # before we check again:
 	SLEEPTIME=60
+# If the VERBOSE variable is set to "1", then we'll write logs to LOGFILE.
+# If you don't want logging, simply set  the VERBOSE=1 line below to VERBOSE=0
+	VERBOSE=1
+	LOGFILE=/tmp/planetweet.log
 # -----------------------------------------------------------------------------------
 # From here on, it is code execution:
 
+	# First create an function to write to the log
+	LOG () { if [ "$VERBOSE" == "1" ]; then printf "%s: %s\n" "`date`" "$1" >> $LOGFILE; fi; }
+
+	# Here we go for real:
+	LOG "Starting up PlaneFence"
 	# Upon startup, let's retrieve the last heard plane
 	# We'll do a little trickery to avoid flow-over problems at midnight
 	# First, we'll fill LASTPLANE with a fallback value:
@@ -55,10 +64,11 @@
 	then
 		LASTPLANE=$(tail -1 $HTMLDIR/$YSTRDAYCSV)
 	fi
+	LOG "Last plane heard: $LASTPLANE"
 
-# if you need to test your setup to see if it tweets something after restart
-# uncomment the line below:
-#	LASTPLANE=nothing
+	# if you need to test your setup to see if it tweets something after restart
+	# uncomment the line below:
+	# LASTPLANE=nothing; LOG "OJO LASTPLANE override to \"nothing\""
 
 	# IFS is used by 'read' to determine the spearator to convert a string into an array
 	IFS=','
@@ -71,7 +81,8 @@
 		# So be it -- it's an edge case, and there's no life-or-death dependency on this script.
 		NEWPLANE=nothing
 		[ -f $HTMLDIR/$TODAYCSV ] && NEWPLANE=$(tail -1 $HTMLDIR/$TODAYCSV)
-
+		LOG "LASTPLANE tested: $LASTPLANE"
+		LOG "NEWPLANE tested:  $NEWPLANE"
 		# Convert the CSV text line into a Bash String Array:
 		read -raOLDPLN <<< "$LASTPLANE"
 		read -raNEWPLN <<< "$NEWPLANE"
@@ -80,6 +91,7 @@
 		# If so, we must tweet!
 		if [ "${OLDPLN[0]}" != "${NEWPLN[0]}" ] && [ "$NEWPLANE" != "nothing" ] ;
 		then
+			LOG "Tweeting..."
 			# Create a Tweet with the first 6 fields, each of them followed by a Newline character
 			TWEET=""
 			for i in {0..5}
@@ -93,7 +105,11 @@
 			$TWURLPATH/twurl -q -r "status=$TWEET" /1.1/statuses/update.json
 			# Last, set the LASTPLANE to the NEWPLANE
 			LASTPLANE=$NEWPLANE
+			LOG "Tweet sent!"
+		else
+			LOG "Nothing to tweet"
 		fi
 		# And now go to sleep for $SLEEPTIME before we check again
+		LOG "Sleeping $SLEEPTIME"
 		sleep $SLEEPTIME
 	done
