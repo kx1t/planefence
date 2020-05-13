@@ -56,6 +56,10 @@
 		LASTPLANE=$(tail -1 $HTMLDIR/$YSTRDAYCSV)
 	fi
 
+# if you need to test your setup to see if it tweets something after restart
+# uncomment the line below:
+#	LASTPLANE=nothing
+
 	# IFS is used by 'read' to determine the spearator to convert a string into an array
 	IFS=','
 	# Now loop forevah:
@@ -87,8 +91,6 @@
 			# Also, the Newline at the end tends to mess with Twurl
 			TWEET="$TWEET${NEWPLN[6]}"
 			$TWURLPATH/twurl -q -r "status=$TWEET" /1.1/statuses/update.json
-			# Write a line to STDOUT, this should appear in the logs:
-			echo Tweeted: $TWEET
 			# Last, set the LASTPLANE to the NEWPLANE
 			LASTPLANE=$NEWPLANE
 		fi

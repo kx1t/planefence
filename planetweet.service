@@ -1,12 +1,13 @@
-# modesmixer2 service for systemd
+# planetweet service for systemd
 [Unit]
 Description=PlaneTweet
 Wants=network.target
 After=network.target
 [Service]
-RuntimeDirectory=/usr/share/planefence
-RuntimeDirectoryMode=0755
 ExecStart=/bin/bash /usr/share/planefence/planetweet.sh
+User=pi
+Group=pi
+RuntimeDirectory=planetweet
 SyslogIdentifier=PlaneTweet
 Type=simple
 Restart=on-failure
