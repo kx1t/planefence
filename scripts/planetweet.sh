@@ -102,6 +102,7 @@
 			# Reason: this is a URL that Twitter reinterprets and previews on the web
 			# Also, the Newline at the end tends to mess with Twurl
 			TWEET="$TWEET${NEWPLN[6]}"
+			LOG "Tweet msg body: $TWEET"
 			$TWURLPATH/twurl -q -r "status=$TWEET" /1.1/statuses/update.json
 			# Last, set the LASTPLANE to the NEWPLANE
 			LASTPLANE=$NEWPLANE

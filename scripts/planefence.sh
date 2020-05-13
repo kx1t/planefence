@@ -21,8 +21,8 @@
 	PLANEFENCEDIR="/home/pi/planefence/"
 	MAXALT=5000
 	DIST=2
-	LAT=42.40487
-	LON=-71.16615
+	LAT=42.39663
+	LON=-71.17726
 #
 #
 # Only change the variables below if you know what you are doing.
