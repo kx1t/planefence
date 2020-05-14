@@ -42,33 +42,56 @@
 # If you don't want logging, simply set  the VERBOSE=1 line below to VERBOSE=0
 	VERBOSE=1
 	LOGFILE=/tmp/planetweet.log
+	TMPFILE=/tmp/planetweet.tmp
+	VERSION=0.140520.1100
+	TWEETON=yes
 # -----------------------------------------------------------------------------------
-# From here on, it is code execution:
+# Open Issues, features, and bugs:
+# - When the script tests the existence of a new aircraft, it will immediately tweet it
+#   If we tweet before the plane leaves the tracking area, the minimum altitude/distance
+#   may be understated as updated information becomes available. PlaneFence will cover this
+#   updated information on the logfile, but the Tweet will already have been sent.
+# - If multiple planes get into the coverage area in a short period of time, only the newest plant may
+#   get tweeted. The time this race condition may exist is if multiple planes get added to PlaneFence
+#   within 1 loop period of this PlaneTweet script ($SLEEPTIME + the time to execute the script).
+#   There is no current plan to fix this -- "it's a feature, not a bug" in the sense that it prevents
+#   tweet-storms with multiple planes in exchange for a risk of missing overflying aircraft. This is
+#   acceptable because PlaneTweet is not a live-or-die service.
+# -----------------------------------------------------------------------------------
+# From here on, it is all about that code execution:
 
 	# First create an function to write to the log
-	LOG () { if [ "$VERBOSE" == "1" ]; then printf "%s: %s\n" "`date`" "$1" >> $LOGFILE; fi; }
+	LOG () { if [ "$VERBOSE" == "1" ]; then printf "%sv%s: %s\n" "`date +\"%Y%m%d-%H%M%S\"`" "$VERSION" "$1" >> $LOGFILE; fi; }
 
 	# Here we go for real:
+	LOG "-----------------------------------------------------"
 	LOG "Starting up PlaneFence"
 	# Upon startup, let's retrieve the last heard plane
 	# We'll do a little trickery to avoid flow-over problems at midnight
 	# First, we'll fill LASTPLANE with a fallback value:
 	LASTPLANE=nothing
-	# Then, if today's CSV file exists, we'll get the last line from that file
-	# If it doesn't exist, we'll try yesterday's file.
+	# LASTPLANE contains the last plane that was tweeted. For convenience,
+	# we save this to the $TMPFILE. If $TMPFILE doesn't exist, we'll fall back
+	# to the last line of today's or yesterday's log.
 	# If that one doesn't exist, we give up and keep the fallback value
-	if [ -f $HTMLDIR/$TODAYCSV ];
+
+	if [ -f $TMPFILE ];
+	then
+		LASTPLANE=$(tail -1 $TMPFILE)
+		LOG "Init: Last plane heard (via tempfile): $LASTPLANE"
+	elif [ -f $HTMLDIR/$TODAYCSV ];
 	then
 		LASTPLANE=$(tail -1 $HTMLDIR/$TODAYCSV)
+		LOG "Init: Last plane heard (via today's file): $LASTPLANE"
 	elif [ -f $HTMLDIR/$YSTRDAYCSV ];
 	then
 		LASTPLANE=$(tail -1 $HTMLDIR/$YSTRDAYCSV)
+		LOG "Init: Last plane heard (via yesterday's file): $LASTPLANE"
 	fi
-	LOG "Last plane heard: $LASTPLANE"
 
 	# if you need to test your setup to see if it tweets something after restart
 	# uncomment the line below:
-	# LASTPLANE=nothing; LOG "OJO LASTPLANE override to \"nothing\""
+	# LASTPLANE=nothing; LOG "OJO LASTPLANE override to \"nothing\""; TWEETON=no
 
 	# IFS is used by 'read' to determine the spearator to convert a string into an array
 	IFS=','
@@ -76,13 +99,25 @@
 	while true
 	do
 		# Read the latest plane into the database. It only makes sense to do this if today's CSV file exists
-		# This creates a race condition where we log a plane in that flies through the area during the last few seconds
-		# before midnight, and we will miss this plane because there's no new file for the next day.
-		# So be it -- it's an edge case, and there's no life-or-death dependency on this script.
-		NEWPLANE=nothing
-		[ -f $HTMLDIR/$TODAYCSV ] && NEWPLANE=$(tail -1 $HTMLDIR/$TODAYCSV)
+		# This creates a race condition when there are multiple planes over your area in the short period that
+		# the script loops ($SLEEPTIME + the time to execute the script). In this case, only the latest plane
+		# will be tweeted about.
+		# This is a bug and a feature at the same time - it prevents from tweet-blasting multiple planes in a 
+		# short period of time.
+
 		LOG "LASTPLANE tested: $LASTPLANE"
-		LOG "NEWPLANE tested:  $NEWPLANE"
+		if [ -f $HTMLDIR/$TODAYCSV ];
+	        then
+        	        NEWPLANE=$(tail -1 $HTMLDIR/$TODAYCSV)
+			LOG "Newest plane (via today's file): $NEWPLANE"
+	        elif [ -f $HTMLDIR/$YSTRDAYCSV ];
+        	then
+                	NEWPLANE=$(tail -1 $HTMLDIR/$YSTRDAYCSV)
+			LOG "Newest plane (via yesterday's file): $NEWPLANE"
+		else
+			NEWPLANE=nothing
+	        fi
+
 		# Convert the CSV text line into a Bash String Array:
 		read -raOLDPLN <<< "$LASTPLANE"
 		read -raNEWPLN <<< "$NEWPLANE"
@@ -103,12 +138,15 @@
 			# Also, the Newline at the end tends to mess with Twurl
 			TWEET="$TWEET${NEWPLN[6]}"
 			LOG "Tweet msg body: $TWEET"
-			$TWURLPATH/twurl -q -r "status=$TWEET" /1.1/statuses/update.json
-			# Last, set the LASTPLANE to the NEWPLANE
-			LASTPLANE=$NEWPLANE
+			if [ "$TWEETON" = "yes" ]; then $TWURLPATH/twurl -q -r "status=$TWEET" /1.1/statuses/update.json; fi
 			LOG "Tweet sent!"
+
+			# Last, set the LASTPLANE to the NEWPLANE and update the $TMPFILE
+			LASTPLANE=$NEWPLANE
+			printf "%s\n" "$NEWPLANE" > $TMPFILE
+			LOG "NEWPLANE: $NEWPLANE"
 		else
-			LOG "Nothing to tweet"
+			LOG "Nothing to tweet (Old: ${OLDPLN[0]} New: ${NEWPLN[0]})"
 		fi
 		# And now go to sleep for $SLEEPTIME before we check again
 		LOG "Sleeping $SLEEPTIME"
