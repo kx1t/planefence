@@ -61,11 +61,23 @@
 # From here on, it is all about that code execution:
 
 	# First create an function to write to the log
-	LOG () { if [ "$VERBOSE" == "1" ]; then printf "%sv%s: %s\n" "`date +\"%Y%m%d-%H%M%S\"`" "$VERSION" "$1" >> $LOGFILE; fi; }
+	LOG ()  {
+		 if [ "$VERBOSE" == "1" ]; then
+			# set the color scheme in accordance to the log level urgency
+			if [ "$2" == "1" ]; then
+				COLOR="${blue}"
+			elif [ "$2" == "2" ]; then
+				COLOR="${red}"
+			else
+				COLOR=""
+			fi
+			printf "%sv%s: %s%s${normal}\n" "`date +\"%Y%m%d-%H%M%S\"`" "$VERSION" "$COLOR" "$1" >> $LOGFILE
+		 fi
+		}
 
 	# Here we go for real:
-	LOG "-----------------------------------------------------"
-	LOG "Starting up PlaneFence"
+	LOG "-----------------------------------------------------" 1
+	LOG "Starting up PlaneFence" 1
 	# Upon startup, let's retrieve the last heard plane
 	# We'll do a little trickery to avoid flow-over problems at midnight
 	# First, we'll fill LASTPLANE with a fallback value:
@@ -75,23 +87,22 @@
 	# to the last line of today's or yesterday's log.
 	# If that one doesn't exist, we give up and keep the fallback value
 
-	if [ -f $TMPFILE ];
-	then
+	if [ -f $TMPFILE ]; then
 		LASTPLANE=$(tail -1 $TMPFILE)
-		LOG "Init: Last plane heard (via tempfile): $LASTPLANE"
-	elif [ -f $HTMLDIR/$TODAYCSV ];
-	then
+		LOG "Init: Last plane heard (via tempfile): $LASTPLANE" 1
+	elif [ -f $HTMLDIR/$TODAYCSV ];	then
 		LASTPLANE=$(tail -1 $HTMLDIR/$TODAYCSV)
-		LOG "Init: Last plane heard (via today's file): $LASTPLANE"
-	elif [ -f $HTMLDIR/$YSTRDAYCSV ];
-	then
+		LOG "Init: Last plane heard (via today's file): $LASTPLANE" 1
+	elif [ -f $HTMLDIR/$YSTRDAYCSV ]; then
 		LASTPLANE=$(tail -1 $HTMLDIR/$YSTRDAYCSV)
-		LOG "Init: Last plane heard (via yesterday's file): $LASTPLANE"
+		LOG "Init: Last plane heard (via yesterday's file): $LASTPLANE" 1
 	fi
+	LOG "-----------------------------------------------------" 1
+
 
 	# if you need to test your setup to see if it tweets something after restart
 	# uncomment the line below:
-	# LASTPLANE=nothing; LOG "OJO LASTPLANE override to \"nothing\""; TWEETON=no
+	# LASTPLANE=nothing; LOG "OJO LASTPLANE override to \"nothing\"" 1; TWEETON=no
 
 	# IFS is used by 'read' to determine the spearator to convert a string into an array
 	IFS=','
@@ -106,12 +117,10 @@
 		# short period of time.
 
 		LOG "LASTPLANE tested: $LASTPLANE"
-		if [ -f $HTMLDIR/$TODAYCSV ];
-	        then
+		if [ -f $HTMLDIR/$TODAYCSV ]; then
         	        NEWPLANE=$(tail -1 $HTMLDIR/$TODAYCSV)
 			LOG "Newest plane (via today's file): $NEWPLANE"
-	        elif [ -f $HTMLDIR/$YSTRDAYCSV ];
-        	then
+	        elif [ -f $HTMLDIR/$YSTRDAYCSV ]; then
                 	NEWPLANE=$(tail -1 $HTMLDIR/$YSTRDAYCSV)
 			LOG "Newest plane (via yesterday's file): $NEWPLANE"
 		else
@@ -124,9 +133,8 @@
 
 		# We compare only the first field to see if the old ICAO HEX code is different from the new one
 		# If so, we must tweet!
-		if [ "${OLDPLN[0]}" != "${NEWPLN[0]}" ] && [ "$NEWPLANE" != "nothing" ] ;
-		then
-			LOG "Tweeting..."
+		if [ "${OLDPLN[0]}" != "${NEWPLN[0]}" ] && [ "$NEWPLANE" != "nothing" ] ; then
+			LOG "Tweeting..." 1
 			# Create a Tweet with the first 6 fields, each of them followed by a Newline character
 			TWEET="${HEADR[0]}: ${NEWPLN[0]}%0A"
 			for i in {1..5}
@@ -137,9 +145,11 @@
 			# Reason: this is a URL that Twitter reinterprets and previews on the web
 			# Also, the Newline at the end tends to mess with Twurl
 			TWEET="$TWEET${NEWPLN[6]}"
-			LOG "Tweet msg body: $TWEET"
-			if [ "$TWEETON" = "yes" ]; then $TWURLPATH/twurl -q -r "status=$TWEET" /1.1/statuses/update.json; fi
-			LOG "Tweet sent!"
+			LOG "Tweet msg body: $TWEET" 1
+			if [ "$TWEETON" = "yes" ]; then
+				$TWURLPATH/twurl -q -r "status=$TWEET" /1.1/statuses/update.json
+			fi
+			LOG "Tweet sent!" 1
 
 			# Last, set the LASTPLANE to the NEWPLANE and update the $TMPFILE
 			LASTPLANE=$NEWPLANE
