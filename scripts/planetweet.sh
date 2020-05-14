@@ -128,8 +128,8 @@
 		then
 			LOG "Tweeting..."
 			# Create a Tweet with the first 6 fields, each of them followed by a Newline character
-			TWEET=""
-			for i in {0..5}
+			TWEET="${HEADR[0]}: ${NEWPLN[0]}%0A"
+			for i in {1..5}
 			do
 				TWEET="$TWEET${HEADR[i]}: ${NEWPLN[i]}%0A"
 			done
