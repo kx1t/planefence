@@ -116,6 +116,10 @@
 		# This is a bug and a feature at the same time - it prevents from tweet-blasting multiple planes in a 
 		# short period of time.
 
+		# First reset the dates to ensure that the new dates are picked up after midnight:
+		TODAYCSV=$(date -d today +"planefence-%y%m%d.csv")
+		YSTRDAYCSV=$(date -d yesterday +"planefence-%y%m%d.csv")
+
 		LOG "LASTPLANE tested: $LASTPLANE"
 		if [ -f $HTMLDIR/$TODAYCSV ]; then
         	        NEWPLANE=$(tail -1 $HTMLDIR/$TODAYCSV)
