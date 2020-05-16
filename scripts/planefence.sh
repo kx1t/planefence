@@ -41,22 +41,25 @@
    $PLANEFENCEDIR/planefence.py --logfile=$LOGFILEBASE --today --outfile=$OUTFILEBASE --format=both --maxalt=$MAXALT --dist=$DIST --lat=$LAT --lon=$LON $VERBOSE
 
 # Now link index.html to today's file:
-   ln -sf $OUTFILETODAY $OUTFILEDIR/index.html
+   if [ -f "$OUTFILETODAY" ]
+   then
+	ln -sf $OUTFILETODAY $OUTFILEDIR/index.html
 
 # Add the historical files to the bottom of the HTML document:
-   printf "<p><p style=\"font-size:10px\">History:</p>\n" >> $OUTFILETODAY
-   printf "<p style=\"font-size:10px\"><a href=\"/planefence\">Latest</a>" >> $OUTFILETODAY
-   for f in `ls -1 -r $OUTFILEBASE*.html`;
-	do [[ -e $f ]] | continue;
-		# printf "Processing %s (%s)\n..." $f "`ls -1 $f | rev | sed -r  's/^[^0-9]*([0-9]+).*/\1/' | rev | date -f - +\"%d-%b-%Y\"` "
-		printf " | `ls -1 $f | rev | sed -r  's/^[^0-9]*([0-9]+).*/\1/' | rev | date -f - +\"%d-%b-%Y\"` " >> $OUTFILETODAY
-		printf "<a href=\"planefence-%s.html\" target=\"_blank\">html</a> " "`ls -1 $f | rev | sed -r  's/^[^0-9]*([0-9]+).*/\1/' |rev | date -f - +\"%y%m%d\"`" >> $OUTFILETODAY
-		printf "<a href=\"planefence-%s.csv\" target=\"_blank\">csv</a> " "`ls -1 $f | rev | sed -r  's/^[^0-9]*([0-9]+).*/\1/' |rev | date -f - +\"%y%m%d\"`" >> $OUTFILETODAY
-	done
-   printf "</p>\n" >>$OUTFILETODAY
-   printf "<p style=\"font-size:10px\">" >>$OUTFILETODAY
-   printf "PlaneFence is Copyright 2020 by Ram&oacute;n F. Kolb and is licensed under GPLv3.0. License terms and conditions and source code are available on <a href=\"https://github.com/kx1t/planefence\" target=\"_blank\">GitHub</a>.</p>" >>$OUTFILETODAY
-   printf "</body></html>" >> $OUTFILETODAY
+   	printf "<p><p style=\"font-size:10px\">History:</p>\n" >> $OUTFILETODAY
+	printf "<p style=\"font-size:10px\"><a href=\"/planefence\">Latest</a>" >> $OUTFILETODAY
+   	for f in `ls -1 -r $OUTFILEBASE*.html`;
+		do [[ -e $f ]] | continue;
+			# printf "Processing %s (%s)\n..." $f "`ls -1 $f | rev | sed -r  's/^[^0-9]*([0-9]+).*/\1/' | rev | date -f - +\"%d-%b-%Y\"` "
+			printf " | `ls -1 $f | rev | sed -r  's/^[^0-9]*([0-9]+).*/\1/' | rev | date -f - +\"%d-%b-%Y\"` " >> $OUTFILETODAY
+			printf "<a href=\"planefence-%s.html\" target=\"_blank\">html</a> " "`ls -1 $f | rev | sed -r  's/^[^0-9]*([0-9]+).*/\1/' |rev | date -f - +\"%y%m%d\"`" >> $OUTFILETODAY
+			printf "<a href=\"planefence-%s.csv\" target=\"_blank\">csv</a> " "`ls -1 $f | rev | sed -r  's/^[^0-9]*([0-9]+).*/\1/' |rev | date -f - +\"%y%m%d\"`" >> $OUTFILETODAY
+		done
+   	printf "</p>\n" >>$OUTFILETODAY
+   	printf "<p style=\"font-size:10px\">" >>$OUTFILETODAY
+   	printf "PlaneFence is Copyright 2020 by Ram&oacute;n F. Kolb and is licensed under GPLv3.0. License terms and conditions and source code are available on <a href=\"https://github.com/kx1t/planefence\" target=\"_blank\">GitHub</a>.</p>" >>$OUTFILETODAY
+   	printf "</body></html>" >> $OUTFILETODAY
+   fi
 # That's all
 # This could probably have been done more elegantly. If you have changes to contribute, I'll be happy to consider them for addition
 # to the GIT repository! --Ramon

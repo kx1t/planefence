@@ -36,7 +36,7 @@ def main(argv):
    for opt, arg in opts:
       if opt in ("-h", "-?", "--help", "--?") :
          print 'Usage: distance.py [--verbose] --distance=<distance_in_statute_miles> --logfile=/path/to/logfile [--outfile=/path/to/outputfile] [--maxalt=maximum_altitude_in_ft] [--format=csv|html|both]'
-         # print 'If lat/long is omitted, then Belmont, MA (town hall) is used.'
+         print 'If lat/long is omitted, then Belmont, MA (town hall) is used.'
 	 print 'If distance is omitted, then 2 miles is used.'
 	 print 'If outfile is omitted, then output is written to stdout. Note - if you intend to capture stdout for processing, make sure that --verbose=1 is not used.'
          print 'Also, format is NOT defined, and outfile has the extention .htm or .html, the output will be written as an html table. Any other outfile extension will be written as CSV'
@@ -105,8 +105,9 @@ def main(argv):
      reader = csv.reader( (line.replace('\0','') for line in f) )
      records = np.array(["ICAO","Flight Number","In-range Date/Time","Out-range Date/Time","Lowest Altitude","Minimal Distance","Flight Link"], dtype = 'object')
      counter = 0
+     fltcounter = 0
      for row in reader:
-
+      if len(row[0]) == 6:
        # first safely convert the distance and altitude values from the row into a float.
        # if we can't convert it into a number (e.g., it's text, not a number) then substitute it by some large number
        try:
@@ -162,13 +163,14 @@ def main(argv):
 	      counter = counter + 1
            # records=np.vstack([records, np.array([row[0],row[11].strip(), row[4] + ' ' + row[5][:8], row[4] + ' ' + row[5][:8],row[1],"{:.1f}".format(rowdist),'https://flightaware.com/live/flight/' + row[11].strip() + '/history' if row[11].strip()<>"" else ''])])    
            records=np.vstack([records, np.array([row[0],row[11].strip(), row[4] + ' ' + row[5][:8], row[4] + ' ' + row[5][:8],row[1],"{:.1f}".format(rowdist),'https://flightaware.com/live/modes/' + row[0].lower() + '/ident/'+ row[11].strip() + '/redirect' if row[11].strip()<>"" else ''])])    
+	   fltcounter = fltcounter + 1
 
      # Now, let's start writing everything to a CSV and/or HTML file:
      # Step zero - turn string truncation off
      pd.set_option('display.max_colwidth', -1)
 
      # First CSV - least hassle as we don't need to reformat record rows with HTML code:
-     if outformat in ('csv', 'both'):
+     if outformat in ('csv', 'both') and fltcounter > 0:
         # make sure that the file has the correct extension
         if outfile[-4:].lower() != '.csv':
 	     outfilecsv = outfile + '.csv'
@@ -181,7 +183,7 @@ def main(argv):
              writer.writerows(records.tolist())
 
      # Next, figure out if we need to write HTML format
-     if outformat in ('html', 'both'):
+     if outformat in ('html', 'both') and fltcounter > 0:
 	# first make sure we know what to call the output file:
         if outfile[-4:].lower() != '.htm' and outfile[-5:].lower() != '.html':
 		outfilehtml = outfile + '.html'
