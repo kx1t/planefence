@@ -28,7 +28,7 @@
         OUTFILEEXT=".log"
         TEMPFILE="/tmp/noisecapt.tmp"
 # If you don't want logging, simply set  the VERBOSE=1 line below to VERBOSE=0
-        VERBOSE=1
+        VERBOSE=0
         LOGFILE=/tmp/noisecapt.log
 # The script will attempt to figure out by itself what your audio device is
 # However, it may get it wrong, especially if you have more than
@@ -86,18 +86,10 @@ do
 	fi
 
         # capture audio and put the results in an array
-        # with the format (example):
-        #       0  1   2  3     4   5   6  7      8    9 10 11    12  13 14 15
-        #       Pk lev dB -5.92 RMS lev dB -22.33 RMS Pk dB -6.13 RMS Tr dB -55.20
-        # In this case,
-        # ${RMS[3]} = Peak_level_dB=-5.92
-        # ${RMS[7]} = RMS_level_dB=-22.33
-        # ${RMS[11]} = RMS_peak_dB=-6.13
-        # ${RMS[15]} = RMS_Trough_dB=-55.20
         # All dB levels are dBFS, or dB where the loudest (="full scale") is 0 dB
         RMSREC="$(arecord -D hw:$CARD,$DEVICE -d $CAPTURETIME --fatal-errors --buffer-size=192000 -f dat -t raw -c 1 --quiet | sox -V -t raw -b 16 -r 48 -c 1 -e signed-integer - -t raw -b 16 -r 48 -c 1 /dev/null stats 2>&1 | grep 'RMS lev dB')"
 	IFS=' ' read -a RMS <<< "$RMSREC"
-        # IFS=',' RMS=("$RMS")
+
 	# put the dB value into LEVEL as an integer. BASH arithmatic doesn't like
 	# float values, so we need to do some trickery to convert the number:
 	LC_ALL=C printf -v LEVEL '%.0f' "${RMS[3]}"
