@@ -115,7 +115,10 @@ do
                 then
                         (( UNDERFLOW="$ONEHOUR - $LOGLINES" ))
                         tail --lines="$UNDERFLOW" "$LOGYSTRDAY" > $TEMPFILE
-                        cat "$LOGTODAY" >> $TEMPFILE
+                        if [ -f "L9GTODAY" ]
+			then
+				cat "$LOGTODAY" >> $TEMPFILE
+			fi
                 elif  [ -f "$LOGTODAY" ]
                 then
                         # yesterday's file doesn't exist and we'll have to make do with today's
@@ -127,6 +130,11 @@ do
                 # we need $LOGLINES records from the $LOGTODAY
                 tail --lines=$LOGLINES "$LOGTODAY" > $TEMPFILE
         fi
+
+	# there is a chance that no $TEMPFILE was created if there was no logfile
+	# for either today or yesterday, so let's touch the file so we can be sure
+	# it exists
+	touch $TEMPFILE
 
         # Now we can read the TEMPFILE and determine the averages
         (( ONEMINCT = 1 ))
