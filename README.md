@@ -52,11 +52,11 @@ sudo chmod a+rwx /usr/share/dump1090-fa/html/planefence
 
 Remember the location of your **planefence directory** . You will need to use it a few times below. For the rest of the installation instructions, we're assuming it is `/usr/share/dump1090-fa/html/planefence`. You will have to substitute your **planefence directory** name if it is different.
 
-### Copy the utilities to the sock30003 directory
-If you followed the `socket30003` install instructions to the letter and you didn't change any directories, then `socket30003` is installed in `/home/pi/sock30003`. We'll copy the scripts there.
+### Copy the utilities to the socket30003 directory
+If you followed the `socket30003` install instructions to the letter and you didn't change any directories, then `socket30003` is installed in `/home/pi/socket30003`. We'll copy the scripts there.
 
 ```
-cp scripts/* /home/pi/sock30003
+cp scripts/* /home/pi/socket30003
 ```
 
 ### Install the Python dependencies
@@ -74,7 +74,7 @@ sudo pip install tzlocal
 If all the directories and file names exactly match up with what we wrote above, you can skip this step. If not, then let's make sure that the script can still find everything.
 
 ```
-cd ~/sock30003
+cd ~/socket30003
 nano planefence.sh
 ```
 
