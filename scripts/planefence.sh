@@ -18,7 +18,7 @@
 # STRONGLY RECOMMENDED to RTFM! See README.md for explanation of what these do.
 # These are the input and output directories and file names:
 	OUTFILEDIR=/usr/share/dump1090-fa/html/planefence
-	PLANEFENCEDIR="/home/pi/planefence/"
+	PLANEFENCEDIR="/usr/share/planefence/"
 	MAXALT=5000
 	DIST=2.5
 	LAT=42.39663
