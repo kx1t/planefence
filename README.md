@@ -52,11 +52,13 @@ sudo chmod a+rwx /usr/share/dump1090-fa/html/planefence
 
 Remember the location of your **planefence directory** . You will need to use it a few times below. For the rest of the installation instructions, we're assuming it is `/usr/share/dump1090-fa/html/planefence`. You will have to substitute your **planefence directory** name if it is different.
 
-### Copy the utilities to the socket30003 directory
+### Copy the utilities to the execution directory
 If you followed the `socket30003` install instructions to the letter and you didn't change any directories, then `socket30003` is installed in `/home/pi/socket30003`. We'll copy the scripts there.
 
 ```
-cp scripts/* /home/pi/socket30003
+sudo mkdir /usr/share/planefence
+sudo cp scripts/* /usr/share/planefence
+sudo chmod a+rwx /usr/share/planefence /usr/share/planefence/*.sh /usr/share/planefence/*.py
 ```
 
 ### Install the Python dependencies
@@ -74,16 +76,15 @@ sudo pip install tzlocal
 If all the directories and file names exactly match up with what we wrote above, you can skip this step. If not, then let's make sure that the script can still find everything.
 
 ```
-cd ~/socket30003
-nano planefence.sh
+sudo nano /usr/share/planefence/planefence.sh
 ```
 
 - Go to the lines between the dashed separators
 - `OUTFILEDIR` contains your *planefence directory* name. If you have a different name, change it there
-- `PLANEFENCEDIR` contains the directory name where planefency.py is located. If you followed the instructions above, you won't need to change this.
+- `PLANEFENCEDIR` contains the directory name where `planefence.py` is located. If you followed the instructions above, you won't need to change this.
 - `MAXALT` contains the altitude ceiling in ft. `MAXALT=5000` means that only planes that are 5000 ft or lower are tracked
 - `DIST` contains the radius around your station in (statute) miles. It relies on your location to be set accurately in `socket30003.conf` as described in the setup instructions for that software package.
-- `LAT` and `LON` should be set to your approximate Latitude and Longitude. Note - these parameters ONLY affect the position shown on the web page. It does NOT recalculate the distance from your station for purposes of determining if an entry is close to your home. That should be set in `~/socket30003/socket30003.cfg` and will only change entries pro-actively.
+- `LAT` and `LON` should be set to your approximate Latitude and Longitude. 
 
 ### Create a cron job
 CRON is a Linux utility to schedule running a program at regular intervals. Once you execute the following command, the system will run
@@ -101,15 +102,15 @@ sudo nano /etc/cron.d/planefence
 ```
 
 By default, this document shows you the following line:
-`*/2 * * * * root /home/pi/planefence/planefence.sh 2>&1`
+`*/2 * * * * root /usr/share/planefence/planefence.sh 2>&1`
 
 The first few characters `*/2` indicate that the script should be run every 2nd minute. You can change this frequence, just pick the appropriate line below and change the text in your document to match it.
 Note -- only pick ONE of the lines below. Don't copy all of them - that would make no sense!
 ```
-*/5 * * * * root /home/pi/planefence/planefence.sh 2>&1  # every 5 minutes
-*/10 * * * * root /home/pi/planefence/planefence.sh 2>&1 # every 10 minutes
-*/30 * * * * root /home/pi/planefence/planefence.sh 2>&1 # every 30 minutes
-0 * * * * root /home/pi/planefence/planefence.sh 2>&1    # every hour (on the hour exactly)
+*/5 * * * * root /usr/share/planefence/planefence.sh 2>&1  # every 5 minutes
+*/10 * * * * root /usr/share/planefence/planefence.sh 2>&1 # every 10 minutes
+*/30 * * * * root /usr/share/planefence/planefence.sh 2>&1 # every 30 minutes
+0 * * * * root /usr/share/planefence/planefence.sh 2>&1    # every hour (on the hour exactly)
 ```
 Note: [Here's a handy website](https://crontab.guru/) that allows you to determine what to set the Crontab to for the frequency you want
 
