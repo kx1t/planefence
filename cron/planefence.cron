@@ -1,1 +1,0 @@
-*/2 * * * * pi /usr/share/planefence/planefence.sh > /tmp/planefence.log 2>&1
