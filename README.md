@@ -1,9 +1,10 @@
 # PlaneFence
-Collection of scripts using Socket30003 logs to create a list of aircraft that fly low over your location
+Collection of scripts using Socket30003 logs to create a list of aircraft that fly low over your location.
 Copyright 2020 by Ramon F. Kolb - Licensed under GPL3.0 - see separate license file.
 
 For an example, see http://ramonk.net/planefence
 
+This documentation is for PlaneFence v3.0. For a summary of changes since v1, see at the end of this document. (There was no publicly released PlaneFence v2.)
 
 ## Attributions, inclusions, and prerequisites
 
@@ -20,6 +21,7 @@ Follow the following steps in order.
 1. These instructions assume that you already have a relatively standard installation of dump1090, dump1090-fa, dump1090-mutability, or the equivalent dump978 on your Raspberry Pi. If you don't have this, Google "FlightAware feeder", "Radarbox24 feeder", or something similar to get started. Get a RPi 3B+ or 4, an RTL-SDR dongle, an antenna, and come back here when you can access a map with aircraft flying over your home.
 2. You should feel somewhat comfortable installing and configuring software on a Raspberry Pi or a similar Linux system using Github. You will be making modifications to your system, and there is a chance you screw things up. You do so at your own risk.
 3. You should have GIT installed on your Raspberry Pi. If you don't, you can add it by typing the following on the command line: `sudo apt install git` 
+4. You should know how to use your Raspberry Pi's default text editor called `nano`. Most importantly, you should remember that you can save your edits with `CTRL-o` and exit from the editor with `CTRL-x`.
 
 ### Install Dump1090.Socket30003
 `Dump1090.Socket30003` collects and stores data about all aircraft within reach in CSV files. We will use these CSV files to extract data about aircraft that fly over our location. Here's how.
@@ -53,12 +55,12 @@ sudo chmod a+rwx /usr/share/dump1090-fa/html/planefence
 Remember the location of your **planefence directory** . You will need to use it a few times below. For the rest of the installation instructions, we're assuming it is `/usr/share/dump1090-fa/html/planefence`. You will have to substitute your **planefence directory** name if it is different.
 
 ### Copy the utilities to the execution directory
-If you followed the `socket30003` install instructions to the letter and you didn't change any directories, then `socket30003` is installed in `/home/pi/socket30003`. We'll copy the scripts there.
-
+Let's make a target directory and move PlaneFence to there:
 ```
 sudo mkdir /usr/share/planefence
-sudo cp scripts/* /usr/share/planefence
-sudo chmod a+rwx /usr/share/planefence /usr/share/planefence/*.sh /usr/share/planefence/*.py
+sudo chmod a+rwx /usr/share/planefence
+cp scripts/* /usr/share/planefence
+chmod a+x /usr/share/planefence/*.sh /usr/share/planefence/*.py start_planefence
 ```
 
 ### Install the Python dependencies
@@ -72,62 +74,51 @@ sudo apt install python-pip python-numpy python-pandas python-dateutil
 sudo pip install tzlocal
 ```
 
-### Edit the script
-If all the directories and file names exactly match up with what we wrote above, you can skip this step. If not, then let's make sure that the script can still find everything.
+### Edit the scripts
+## planefence.sh
+Planefence.sh is the work horse of this project. It makes sure that everything is invoked and generated correctly, and corrects any issues or duplicates that the system may generated. You should make sure that the variables are set to appropriate values for your situation. Here's how to do that:
 
 ```
-sudo nano /usr/share/planefence/planefence.sh
+nano /usr/share/planefence/planefence.sh
 ```
 
-- Go to the lines between the dashed separators
+- Go to the lines between the dashed separators and read the instruction/commentary. You should consider changing at least the following:
 - `OUTFILEDIR` contains your *planefence directory* name. If you have a different name, change it there
 - `PLANEFENCEDIR` contains the directory name where `planefence.py` is located. If you followed the instructions above, you won't need to change this.
 - `MAXALT` contains the altitude ceiling in ft. `MAXALT=5000` means that only planes that are 5000 ft or lower are tracked
 - `DIST` contains the radius around your station in (statute) miles. It relies on your location to be set accurately in `socket30003.conf` as described in the setup instructions for that software package.
 - `LAT` and `LON` should be set to your approximate Latitude and Longitude. 
 
-### Create a cron job
-CRON is a Linux utility to schedule running a program at regular intervals. Once you execute the following command, the system will run
-`planefence` every 2 minutes. That way, your website is never more than 2 minutes out of date.
-
+## start-planefence
+This script is a wrapped for the PlaneFence Systemd Service (see below).
+It invokes PlaneFence every approx. 2 minutes. I highly suggest not to change this, but if you must, then you can do so as follows:
 ```
-sudo cp ~/git/planefence/cron/planefence.cron /etc/cron.d/planefence
+nano /usr/share/planefence/start_planefence
 ```
+The only parameter you should change here, is `LOOPTIME`, which contains the time between two runs of PlaneFence. I strongly suggest to make this no shorter than 2 minutes, to avoid overloading your system.
 
-Note that this will take a reasonably high amount of processing power and disk I/O. If your don't mind a less frequent interval
-to update your PlaneFence website, you can change it as follows:
-
+### Install the PlaneFence Systemd Service
+PlaneFence uses SystemD to run as a daemon. Daemons are programs that run in the background without user interaction.
+Perform the following:
 ```
-sudo nano /etc/cron.d/planefence
+sudo cp ~/git/planefence/systemd/planefence.service /lib/systemd/system
+sudo systemctl daemon-reload
+sudo systemctl enable planefence
+sudo systemctl start planefence
 ```
-
-By default, this document shows you the following line:
-`*/2 * * * * root /usr/share/planefence/planefence.sh 2>&1`
-
-The first few characters `*/2` indicate that the script should be run every 2nd minute. You can change this frequence, just pick the appropriate line below and change the text in your document to match it.
-Note -- only pick ONE of the lines below. Don't copy all of them - that would make no sense!
-```
-*/5 * * * * root /usr/share/planefence/planefence.sh 2>&1  # every 5 minutes
-*/10 * * * * root /usr/share/planefence/planefence.sh 2>&1 # every 10 minutes
-*/30 * * * * root /usr/share/planefence/planefence.sh 2>&1 # every 30 minutes
-0 * * * * root /usr/share/planefence/planefence.sh 2>&1    # every hour (on the hour exactly)
-```
-Note: [Here's a handy website](https://crontab.guru/) that allows you to determine what to set the Crontab to for the frequency you want
-
-Once done, exit with CTRL-o (to save your changes) CTRL-x
+Later, you can control the PlaneFence service with one of the following commands:
+`sudo systemctl stop planefence` -> stops the planefence service
+`sudo systemctl disable planefence` -> won't restart the planefence service upon reboot
+`systemctl status planefence` -> shows the status of the planefence service
+`sudo systemctl start planefence` -> starts the planefence service after you stopped it
+`sudo systemctl enable planefence` -> resumes the planefence service after reboot (after you disabled it)
 
 ## catchup.sh
 
-***Note this is a work in progress - this script needs adapting and probably won't (yet) work in its current state***
-
-This script will do a "catch-up" run. It will iterate through all `/tmp/dump1090*.txt` files and create heatmaps for them.
-If you changed any directories, please make sure to update this script to reflect this.
-The script must be run from the same directory where `planefence.py` is located.
-It takes no command line arguments. Use it simply as:
-
-```
-./catchup.sh
-```
+This script will do a "catch-up" run. It will iterate through all `/tmp/dump1090*.txt` files and create PlaneFence pages for them.
+Usage: `/usr/share/planefence/catchup.sh [days]`
+Example: `/usr/share/planefence/catchup.sh 1`
+The optional `days` argument indicates how many days of history the script will generate, with "1" being today, and "8" being today + the previous 7 days. The script will skip those days for which there is no data available.
 
 # Seeing your PlaneFence page
 Once you have rendered at least 1 PlaneFence, you can find it at `http://<address_of_rpi>/planefence`.
@@ -144,10 +135,9 @@ https://github.com/kx1t/planefence/blob/master/README-twitter.md
 If you want to see an example of how this works, go here: https://twitter.com/PlaneBoston
 
 # Known Issues
-- The history of the map goes wild if there has been no plane within your filter as of today. I'll see if we can fix this soon. Note that once there's at least 1 plane in the area, the table will render correctly.
-- The script isn't very friendly to changes to the directory naming conventions. Working on that too.
-- The catch-up script has the paths hardcoded. This is another thing that needs changing.
-- allow setting `LAT` and `LON` in the script to actually recalculate the distance from the station. Right now, it's only used for cosmetic purposes in rendering the webpage.
+- There is some irregularity if a plane stays in range during 2 consecutive runs. Investigating
+- Planes that are seen multiple times during consecutive runs, may show up multiple times
+- The script hasn't been thoroughly tested. Please provide feedback and exerpts of /tmp/planefence.log that show the activites around the time the issues occurred.
 
 # Summary of License Terms
 This program is free software: you can redistribute it and/or modify
@@ -163,3 +153,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+# Release History
+- v1: PlaneFence based on BASH and Python scripts. Iterates through all logs every time it is invoked
+- v1: Using CRON to invoke script every 2 minutes
+- v2: never publicly released
+- v3.0: total rewrite of planefence.sh and major simplification of planefence.py
+- v3.0: only iterates through the socket30003 log lines that weren't processed previously. Reduced execution time dramatically, from ~1 minute for 1M lines, to an average of ~5 seconds between two runs that are 2 minutes apart.
+- v3.0: uses Systemd to run planefence as a daemon; removed need for cronjob.
