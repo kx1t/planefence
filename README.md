@@ -32,7 +32,7 @@ Make sure to check that your lat/long has been correctly set to your approximate
 If you want to use PlaneFence as-is, then the instructions below will assume that you DON'T change the location or format of the log files. This means, that they are written as `/tmp/dump1090_127_0_0_1-yymmdd.txt` and `....log`.
 
 ### Install the scripts from this repository
-1. Clone the repository. Log into you Raspberry Pi and give the following commands:
+Clone the repository. Log into you Raspberry Pi and give the following commands:
 
 ```
 cd
@@ -42,6 +42,11 @@ git clone https://github.com/kx1t/planefence.git
 cd planefence
 ```
 
+Note -- currently, PlaneFence v3.0 is on a separate branch. In order to make sure you are installing the software from this branch, please issue the following commands:
+```
+git fetch --all
+git checkout planefence-v3
+```
 ### Make a planefence directory in your existing HTML directory
 Under normal circumstances, your FlightAware or dump1090 maps are rendered in this directory:
 `/usr/share/dump1090-fa/html/` or `/usr/share/dump1090/html/`
