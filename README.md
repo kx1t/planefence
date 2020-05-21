@@ -89,13 +89,13 @@ nano /usr/share/planefence/planefence.sh
 - `DIST` contains the radius around your station in (statute) miles. It relies on your location to be set accurately in `socket30003.conf` as described in the setup instructions for that software package.
 - `LAT` and `LON` should be set to your approximate Latitude and Longitude. 
 
-## start-planefence
+## start_planefence
 This script is a wrapped for the PlaneFence Systemd Service (see below).
 It invokes PlaneFence every approx. 2 minutes. I highly suggest not to change this, but if you must, then you can do so as follows:
 ```
 nano /usr/share/planefence/start_planefence
 ```
-The only parameter you should change here, is `LOOPTIME`, which contains the time between two runs of PlaneFence. I strongly suggest to make this no shorter than 2 minutes, to avoid overloading your system.
+The only parameter you could change here, is `LOOPTIME`, which contains the time between two runs of PlaneFence. I strongly suggest to make this no shorter than 2 minutes, to avoid overloading your system.
 
 ### Install the PlaneFence Systemd Service
 PlaneFence uses SystemD to run as a daemon. Daemons are programs that run in the background without user interaction.
@@ -112,6 +112,8 @@ Later, you can control the PlaneFence service with one of the following commands
 `systemctl status planefence` -> shows the status of the planefence service
 `sudo systemctl start planefence` -> starts the planefence service after you stopped it
 `sudo systemctl enable planefence` -> resumes the planefence service after reboot (after you disabled it)
+
+If you want to do a clean, one-off run of PlaneFence from scratch for today, the recommended way of doing this is using the catchup script: `/usr/share/planefence/catchup.sh 1`. See below for more information.
 
 ## catchup.sh
 
