@@ -115,7 +115,7 @@ do
                 then
                         (( UNDERFLOW="$ONEHOUR - $LOGLINES" ))
                         tail --lines="$UNDERFLOW" "$LOGYSTRDAY" > $TEMPFILE
-                        if [ -f "L9GTODAY" ]
+                        if [ -f "LOGTODAY" ]
 			then
 				cat "$LOGTODAY" >> $TEMPFILE
 			fi

@@ -1,26 +1,33 @@
 #!/bin/bash
-OUTFILEDIR=/usr/share/dump1090-fa/html/planefence
-OUTFILEBASE=$OUTFILEDIR/planefence
-OUTFILETODAY=$OUTFILEBASE-`date --date="today" '+%y%m%d'`.html
-HTMLFOOTER=".html"
+TMPDIR=/tmp
+LOGFILEBASE=$TMPDIR/dump1090-127_0_0_1-
 PLANEFENCEDIR=/usr/share/planefence
+MAXHIST=7
 
-for t in /tmp/dump1090-127*.txt;
-do [[ -e $t ]] | continue;
-   OUTFILE=$OUTFILEBASE-${t:24:6}
-   echo processing ${t:24:6}
-   $PLANEFENCEDIR/planefence.py --logfile=$t --outfile=$OUTFILE --format=both --maxalt=5000 --verbose
-   # ln -sf $OUTFILETODAY $OUTFILEDIR/index.html
-   printf "<p><p style=\"font-size:10px\">History:\n" >> $OUTFILE.html
-   printf "<p style=\"font-size:10px\"><a href=\"/planefence\">Latest</a> | " >> $OUTFILE.html
-   echo Adding history to file $OUTFILE.html...
-   for f in $OUTFILEBASE*.html;
-	do [[ -e $f ]] | continue;
-		printf "${f:52:2}/${f:54:2}/20${f:50:2} " >> $OUTFILE.html
-		printf "<a href=\"planefence-${f:50:6}.html\" target=\"_blank\">html</a> " >> $OUTFILE.html
-		printf "<a href=\"planefence-${f:50:6}.csv\" target=\"_blank\">csv</a> | " >> $OUTFILE.html
-	done
+# resolve any commandline arg:
+if [ "$1" != "" ]
+then
+        MAXHIST=$1
+fi
+
+# First stop the Planefence Systemd service if it's active:
+RESTARTSERVICE=1
+systemctl -q is-active planefence && sudo systemctl stop planefence || RESTARTSERVICE=0
+
+# loop though all dates:
+echo looping through last $MAXHIST of $LOGFILEBASE*.txt
+for t in $(ls -1 $LOGFILEBASE*.txt | tail -$MAXHIST | rev | cut -c5-10 | rev)
+do
+   echo processing $t
+   $PLANEFENCEDIR/planefence.sh $t
    echo Done, cycling to the next file
 done
+
+# Restart the Planefence Systemd Service if we stopped it earlier:
+if [ "$RESTARTSERVICE" == "1" ]
+then
+	sudo systemctl start planefence
+fi
+
 echo All done. Sayonara!
 

@@ -27,7 +27,7 @@
 # HTMLDIR indicates where we can find the CSV files that PlaneFence produces:
 	HTMLDIR=/usr/share/dump1090-fa/html/planefence
 # HEADR determines the tags for each of the fields in the Tweet:
-	HEADR=("ICAO" "FLIGHT" "START TIME" "END TIME" "MIN ALT (ft)" "MIN DIST (miles)" "LINK")
+	HEADR=("Transponder ID" "Flight" "Time in range" "Time out of range" "Min. Alt. (ft)" "Min. Dist. (miles)" "Link")
 # CSVFILE termines which file name we need to look in. We're using the 'date' command to
 # get a filename in the form of 'planefence-200504.csv' where 200504 is yymmdd
 	TODAYCSV=$(date -d today +"planefence-%y%m%d.csv")

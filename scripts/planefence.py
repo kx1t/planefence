@@ -20,28 +20,27 @@ def main(argv):
    maxalt = 99999
    logfile = ''
    outfile = '/dev/stdout'
-   outformat = ''
    tday = False
    goodcount=0
    badcount=0
+   calcdist = False
 
    now_utc = datetime.now(timezone('UTC'))
    now = now_utc.astimezone(get_localzone())
 
    try:
-      opts, args = getopt.getopt(argv,'',["h","help","?","distance=","lat=","long=","dist=","log=","logfile=","v","verbose","outfile=","maxalt=","format=","today"])
+      opts, args = getopt.getopt(argv,'',["h","help","?","distance=","lat=","long=","dist=","log=","logfile=","v","verbose","outfile=","maxalt=","calcdist"])
    except getopt.GetoptError:
       print 'ERROR. Usage: distance.py [--verbose] --distance=<distance_in_km> --logfile=/path/to/logfile'
       sys.exit(2)
    for opt, arg in opts:
       if opt in ("-h", "-?", "--help", "--?") :
-         print 'Usage: distance.py [--verbose] --distance=<distance_in_statute_miles> --logfile=/path/to/logfile [--outfile=/path/to/outputfile] [--maxalt=maximum_altitude_in_ft] [--format=csv|html|both]'
+         print 'Usage: distance.py [--verbose] [--calcdist] --distance=<distance_in_statute_miles> --logfile=/path/to/logfile [--outfile=/path/to/outputfile] [--maxalt=maximum_altitude_in_ft] [--format=csv|html|both]'
          print 'If lat/long is omitted, then Belmont, MA (town hall) is used.'
 	 print 'If distance is omitted, then 2 miles is used.'
 	 print 'If outfile is omitted, then output is written to stdout. Note - if you intend to capture stdout for processing, make sure that --verbose=1 is not used.'
-         print 'Also, format is NOT defined, and outfile has the extention .htm or .html, the output will be written as an html table. Any other outfile extension will be written as CSV'
-	 print 'If format is defined, it will add the appropriate extention(s) to outfile.'
-	 print 'If --today is used, the logfile is assumed to be the base format for logs, and we will attempt to oick today\'s log.'
+	 print 'If --today is used, the logfile is assumed to be the base format for logs, and we will attempt to pick today\'s log.'
+	 print 'If --calcdist is used, it will calculate the distance based on the coordinates. If it is omitted, the distance from the logfile will be used. Note that calculation of distances is very processor intensive and may dramatically slow down the processing speed of large files.'
       elif opt == "--lat":
          lat = arg
       elif opt =="--lon":
@@ -56,41 +55,22 @@ def main(argv):
 	 outfile = arg
       elif opt == "--maxalt":
 	 maxalt = float(arg)
-      elif opt == "--format":
-	 outformat = arg
-      elif opt == "--today":
-	 tday = True
+      elif opt == "--calcdist":
+	 calcdist = True
 
    if verbose == 1:
       # print 'lat = ', lat
       # print 'lon = ', lon
       print 'max distance = ', dist, "statute miles"
       print 'max altitude = ', maxalt, "ft"
-      print 'output is written to ', outfile
+      # print 'output is written to ', outfile
 
    if logfile == '':
       print "ERROR: Need logfile parameter"
       sys.exit(2)
 
-   if tday:
-      logfile = logfile + now.strftime("%y%m%d") +".txt"
-      outfile = outfile + "-" + now.strftime("%y%m%d")
-
    if verbose == 1:
       print 'input is read from ', logfile
-
-   if outformat not in ("html", "csv", "both", ""):
-      print "Error: format not understood"
-      sys.exit(2)
-
-   # figure out the outformat if not defined:
-   if outformat == '':
-      if outfile[-4:].lower() == '.htm'or outfile[-5:].lower() == '.html':
-	 outformat = 'html'
-      elif outfile[-4:].lower() == '.csv':
-	 outformat = 'csv'
-      else:
-	 outformat = 'both'
 
    lat1 = math.radians(float(lat))
    lon1 = math.radians(float(lon))
@@ -100,6 +80,7 @@ def main(argv):
 #
 # format of logfile is 0-ICAO,1-altitude(meter),2-latitude,3-longitude,4-date,5-time,6-angle,7-distance(kilometer),8-squawk,9-ground_speed(kilometerph),10-track,11-callsign
 # format of airplaneslist is [[0-ICAO,11-FltNum,4/5-FirstHeard,4/5-LastHeard,1-LowestAlt,7-MinDistance,FltLink)]
+
    with open(logfile, "rb") as f:
      # the line.replace is because sometimes the logfile is corrupted and contains zero bytes. Python pukes over this.
      reader = csv.reader( (line.replace('\0','') for line in f) )
@@ -111,34 +92,25 @@ def main(argv):
        # first safely convert the distance and altitude values from the row into a float.
        # if we can't convert it into a number (e.g., it's text, not a number) then substitute it by some large number
        try:
-          # rowdist=float(row[7]) * 1.15078
-	  # use haversine formula instead of the  distance field
-	  # this enables the use of locations other than the station itself
-	  # subject to the receiver's range of course
-	  lat2 = math.radians(float(row[2]))
-	  lon2 = math.radians(float(row[3]))
-	  dlat = lat2 - lat1
-	  dlon = lon2 - lon1
-	  a = math.sin(dlat / 2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2)**2
-	  rowdist = 7917.5 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+	  if calcdist == False:
+          	rowdist=float(row[7]) * 1.15078
+	  else:
+		  # use haversine formula instead of the  distance field
+		  # this enables the use of locations other than the station itself
+		  # subject to the receiver's range of course
+		  # Please note that this calculation is rather slow, especially when repeated of 100,000s of lines
+		  lat2 = math.radians(float(row[2]))
+		  lon2 = math.radians(float(row[3]))
+		  dlat = lat2 - lat1
+		  dlon = lon2 - lon1
+		  a = math.sin(dlat / 2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2)**2
+		  rowdist = 7917.5 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
        except:
           rowdist=float("999999")
        try:
 	  rowalt=float(row[1])
        except:
 	  rowalt=float("999999")
-
-       if verbose == 1:
-	  try:
-	     printdist=float(row[7]) * 1.150779448
-	  except:
-	     printdist=float("999999")
-	  if printdist / rowdist < .9 or rowdist / printdist < .9:
-	     badcount = badcount + 1
-	     lofc = math.acos(math.sin(lat1)*math.sin(lat2)+math.cos(lat1)*math.cos(lat2)*math.cos(lon2-lon1))*3963
-	     print "Distance diff >10Pct: H-calc Diff %%:", int(100*(1-(printdist / rowdist))), "LofC-calc Diff %%:", int(100*(1-(printdist/lofc))), "Reported:", printdist, "H-calc:", rowdist, "(", 100*round(float(badcount)/float(goodcount), 2), "of", int(badcount + goodcount)
-	  else:
-	     goodcount = goodcount + 1
 
        # now check if it's a duplicate that is in range
        if row[0] in records and rowdist <= dist and rowalt <= maxalt:
@@ -169,54 +141,22 @@ def main(argv):
      # Step zero - turn string truncation off
      pd.set_option('display.max_colwidth', -1)
 
-     # First CSV - least hassle as we don't need to reformat record rows with HTML code:
-     if outformat in ('csv', 'both') and fltcounter > 0:
+     # delete the header as this interferes with appending:
+     records = np.delete(records, (0), axis=0)
+
+     # Write CSV file
+     if fltcounter > 0:
         # make sure that the file has the correct extension
-        if outfile[-4:].lower() != '.csv':
-	     outfilecsv = outfile + '.csv'
-	else:
-	     outfilecsv = outfile
+	if verbose == 1:
+		print 'Output is written to: ', outfile
 
         # Now write the table to a file as a CSV file
-        with open(outfilecsv, 'w') as file:
+        with open(outfile, 'w') as file:
              writer = csv.writer(file, delimiter=',')
              writer.writerows(records.tolist())
-
-     # Next, figure out if we need to write HTML format
-     if outformat in ('html', 'both') and fltcounter > 0:
-	# first make sure we know what to call the output file:
-        if outfile[-4:].lower() != '.htm' and outfile[-5:].lower() != '.html':
-		outfilehtml = outfile + '.html'
-	else:
-		outfilehtml = outfile
-
-	# turn string truncation off
-	pd.set_option('display.max_colwidth', -1)
-	# now rewrite the last field into a real link in the second field:
-	for row in range(1,np.shape(records)[0]):
-		if records[row][6] != '':
-		   records[row][1] = "<a href=%s target=\"_blank\">%s</a>" % (records[row][6],records[row][1])
-		records[row][4] = "{:,} ft".format(int(records[row][4]))
-		records[row][5] = records[row][5] + " miles"
-		records[row][6] = ""
-		# print records[row]
-	
-	# now go from Numpy array -> Panda DataFrame, remove last (empty) column, then -> HTML and write it to Outfile
-	
-	recordsframe = pd.DataFrame(np.roll(np.flip(records, axis=0),1, axis=0))
-	recordsframe.drop(recordsframe.columns[len(recordsframe.columns)-1], axis=1, inplace=True)
-	with open(outfilehtml, 'w') as file:
-	     # now = datetime.now()
-	     file.write("<html><head><title>PlaneFence</title></head>")
-	     file.write("<h1>PlaneFence</h1>")
-	     file.write("<h2>Show aircraft in range of ADS-B PiAware station for a specific day</h2>")
-	     # file.write("<p>")
-	     file.write("<ul><li>Last update: " + now.strftime("%b %d, %Y %H:%M:%S %z"))
-	     file.write("<li>Maximum distance from <a href=\"https://www.openstreetmap.org/?mlat=%s&mlon=%s#map=14/%s/%s&layers=H\" target=_blank>%sN %sE</a>: %s miles" % (lat, lon, lat, lon, lat, lon, dist))
-	     file.write("<li>Only aircraft below %s ft are reported." % (maxalt))
-	     file.write("</ul><p>")
-	     recordsframe.to_html(file,escape = False, header = False)
-
+     else:
+	if verbose == 1:
+		print 'Nothing to write to: ',outfile
 
      # That's all, folks!
 
@@ -224,5 +164,3 @@ def main(argv):
 # this invokes the main function defined above:
 if __name__ == "__main__":
    main(sys.argv[1:])
-
-
