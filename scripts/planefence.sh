@@ -114,6 +114,21 @@ WRITEHTMLTABLE () {
 	# Next create an HTML table from the CSV file
 	# Usage: WRITEHTMLTABLE INPUTFILE OUTPUTFILE [standalone]
 	LOG "WRITEHTMLTABLE $1 $2 $3"
+
+	# figure out if there is NOISE data in the CSV file.
+	if [ -f "$1" ]
+	then
+		MAXFIELDS=0
+		while read -r NEWLINE
+		do
+			IFS=, read -ra RECORD <<< "$NEWLINE"
+			if (( ${#RECORD[*]} > MAXFIELDS ))
+			then
+				MAXFIELDS=${#RECORD[*]}
+			fi
+		done < "$1"
+	fi
+
 	if [ "$3" == "standalone" ]
 	then
 		printf "<html>\n<body>\n" >>"$2"
@@ -128,8 +143,21 @@ WRITEHTMLTABLE () {
 	<th>Time Last Seen</th>
 	<th>Min. Altitude</th>
 	<th>Min. Distance</th>
-	</tr>
 EOF
+	if (( MAXFIELDS > 7 ))
+	then
+		LOG "Number of fields in CSV is $MAXFIELDS. Adding NoiseCapt table headers..."
+		cat <<EOF >>"$2"
+		<th>Peak RMS audio</th>
+		<th>1 min avg</th>
+		<th>5 min avg</th>
+		<th>10 min avg</th>
+		<th>1 hr avg</th>
+EOF
+	else
+		LOG "Number of fields in CSV is $MAXFIELDS. Not adding NoiseCapt table headers!"
+	fi
+	printf "</tr>\n" >>"$2"
 
 	# Now write the table
 	COUNTER=0
@@ -152,6 +180,14 @@ EOF
 			printf "<td>%s</td>\n" "${NEWVALUES[3]}" >>"$2"
 			printf "<td>%s ft</td>\n" "${NEWVALUES[4]}" >>"$2"
 			printf "<td>%s mi</td>\n" "${NEWVALUES[5]}" >>"$2"
+			if (( MAXFIELDS > 7 ))
+			then
+				# print Noise Values
+				for i in {7..11}
+				do
+					printf "<td>%s dBFS</td>\n" "${NEWVALUES[i]}" >>"$2"
+				done
+			fi
 			printf "</tr>\n" >>"$2"
 		fi
 	    fi
