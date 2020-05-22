@@ -38,6 +38,8 @@
 	HISTTIME=7 # number of days shown in the history section of the website
 #	CALCDIST="" # if this variable is set to "", then planefence.py will use the reported distance from your station instead of recalculating it
 	CALCDIST="--calcdist" # if this variable is set to "--calcdist", then planefence.py will calculate the distance relative to LAT and LON as defined above
+	MY="KX1T's" # text for the header of the website
+	MYURL=".." # link for $MY in tge website's header
 #
 # *** SPECIAL CONSIDERATION OF LON and LAT
 # Only if CALCDIST="--calcdist", PlaneFence will recalculate every entry to see if it is within DIST of the defined LON/LAT.
@@ -68,7 +70,7 @@
 	HISTFILE=$OUTFILEDIR/$HISTORY
 	VERSION=3.0
 	LOGFILE=/tmp/planefence.log
-#	LOGFILE=/dev/stdout
+#	LOGFILE=logger # if $LOGFILE is set to "logger", then the logs are written to /var/log/syslog. This is good for debugging purposes.
 	CURRENT_PID=$$
 	PROCESS_NAME=$(basename $0)
 
@@ -96,12 +98,12 @@ LOG ()
 		else
 			COLOR=""
 		fi
-		printf "%s-%s[%s]v%s: %s%s${normal}\n" "$(date +"%Y%m%d-%H%M%S")" "$PROCESS_NAME" "$CURRENT_PID" "$VERSION" "$COLOR" "$IN" >> $LOGFILE
-#		if [ "$VERBOSE" == "--verbose" ]
-#		then
-#			printf "Press any key..."
-#			read -n 1 -s
-#		fi
+		if [ "$LOGFILE" == "logger" ]
+		then
+			printf "%s-%s[%s]v%s: %s%s${normal}\n" "$(date +"%Y%m%d-%H%M%S")" "$PROCESS_NAME" "$CURRENT_PID" "$VERSION" "$COLOR" "$IN" | logger
+		else
+			printf "%s-%s[%s]v%s: %s%s${normal}\n" "$(date +"%Y%m%d-%H%M%S")" "$PROCESS_NAME" "$CURRENT_PID" "$VERSION" "$COLOR" "$IN" >> $LOGFILE
+		fi
 	fi
 }
 LOG "-----------------------------------------------------"
@@ -139,22 +141,26 @@ EOF
 	    then
 		(( COUNTER = COUNTER + 1 ))
 		IFS=, read -ra NEWVALUES <<< "$NEWLINE"
-		printf "<tr>\n" >>"$2"
-		printf "<td>%s</td>" "$COUNTER" >>"$2"
-		printf "<td>%s</td>\n" "${NEWVALUES[0]}" >>"$2"
-		printf "<td><a href=\"%s\" target=\"_blank\">%s</a></td>\n" "${NEWVALUES[6]}" "${NEWVALUES[1]}" >> "$2"
-		printf "<td>%s</td>\n" "${NEWVALUES[2]}" >>"$2"
-		printf "<td>%s</td>\n" "${NEWVALUES[3]}" >>"$2"
-		printf "<td>%s ft</td>\n" "${NEWVALUES[4]}" >>"$2"
-		printf "<td>%s mi</td>\n" "${NEWVALUES[5]}" >>"$2"
-		printf "</tr>\n" >>"$2"
+		# only write the row if the first field contains 6 characters (otherwise treat it as a header, and skip)
+		if [ "${#NEWVALUES[0]}" == "6" ]
+		then
+			printf "<tr>\n" >>"$2"
+			printf "<td>%s</td>" "$COUNTER" >>"$2"
+			printf "<td>%s</td>\n" "${NEWVALUES[0]}" >>"$2"
+			printf "<td><a href=\"%s\" target=\"_blank\">%s</a></td>\n" "${NEWVALUES[6]}" "${NEWVALUES[1]}" >> "$2"
+			printf "<td>%s</td>\n" "${NEWVALUES[2]}" >>"$2"
+			printf "<td>%s</td>\n" "${NEWVALUES[3]}" >>"$2"
+			printf "<td>%s ft</td>\n" "${NEWVALUES[4]}" >>"$2"
+			printf "<td>%s mi</td>\n" "${NEWVALUES[5]}" >>"$2"
+			printf "</tr>\n" >>"$2"
+		fi
 	    fi
 	  done < "$1"
 	fi
 	printf "</table>\n" >>"$2"
 	if [ "$COUNTER" == "0" ]
 	then
-		printf "<p>No flights in range!</p>" >>"$2"
+		printf "<p class=\"history\">No flights in range!</p>" >>"$2"
 	fi
         if [ "$3" == "standalone" ]
         then
@@ -183,7 +189,7 @@ EOF
 	# right below. Right now, it lists all files that have the planefence-20*.html format (planefence-200504.html, etc.), and then
 	# picks the newest 7 (or whatever HISTTIME is set to), reverses the strings to capture the characters 6-11 from the right, which contain the date (200504)
 	# and reverses the results back so we get only a list of dates in the format yymmdd.
-	for d in $(ls -1 "$1"/planefence-*[!e].html | tail -$HISTTIME | rev | cut -c6-11 | rev | sort -r)
+	for d in $(ls -1 "$1"/planefence-*[!e].html | tail --lines=$HISTTIME | rev | cut -c6-11 | rev | sort -r)
 	do
 	       	printf " | %s" "$(date -d "$d" +%d-%b-%Y): " >> "$2"
 		printf "<a href=\"%s\" target=\"_top\">html</a> - " "planefence-$(date -d "$d" +"%y%m%d").html" >> "$2"
@@ -231,7 +237,7 @@ rm "$OUTFILETMP" 2>/dev/null
 
 # before anything else, let's determine our current line count and write it back to the temp file
 # We do this using 'wc -l', and then strip off all character starting at the first space
-CURRCOUNT=$(wc -l $LOGFILEBASE"$FENCEDATE".txt |cut -d ' ' -f 1)
+[ -f "$LOGFILEBASE$FENCEDATE.txt" ] && CURRCOUNT=$(wc -l $LOGFILEBASE$FENCEDATE.txt |cut -d ' ' -f 1) || CURRCOUNT=0
 
 # Now write the $CURRCOUNT back to the TMP file for use next time PlaneFence is invoked:
 echo "$CURRCOUNT" > "$TMPLINES"
@@ -239,7 +245,7 @@ echo "$CURRCOUNT" > "$TMPLINES"
 LOG "Current run starts at line $READLINES of $CURRCOUNT"
 
 # Now create a temp file with the latest logs
-tail +$READLINES $LOGFILEBASE"$FENCEDATE".txt > $INFILETMP
+tail --lines=+$READLINES $LOGFILEBASE"$FENCEDATE".txt > $INFILETMP
 
 # First, run planefence.py to create the CSV file:
 $PLANEFENCEDIR/planefence.py --logfile=$INFILETMP --outfile=$OUTFILETMP --maxalt=$MAXALT --dist=$DIST --lat=$LAT --lon=$LON $VERBOSE $CALCDIST 2>&1 | LOG
@@ -255,7 +261,7 @@ then
 	LASTLINE=$(tail -n 1 "$OUTFILECSV")
 	FIRSTLINE=$(head -n 1 "$OUTFILETMP")
 
-	LOG "Before: CSV file has $(wc -l "$OUTFILECSV" |cut -d ' ' -f 1) lines"
+	[ -f "$OUTFILECSV" ] && LOG "Before: CSV file has $(wc -l "$OUTFILECSV" |cut -d ' ' -f 1) lines" || LOG "Before: CSV file doesn't exist"
 	LOG "Before: Last line of CSV file: $LASTLINE"
         LOG "Before: New PlaneFence file has $(wc -l "$OUTFILETMP" |cut -d ' ' -f 1) lines"
         LOG "Before: First line of PF file: $FIRSTLINE"
@@ -318,13 +324,13 @@ then
 		LOG "No match, continuing..."
 	fi
 else
-	LOG "Before: CSV file has $(wc -l "$OUTFILECSV" |cut -d ' ' -f 1) lines"
+	[ -f "$OUTFILECSV" ] && LOG "Before: CSV file has $(wc -l "$OUTFILECSV" |cut -d ' ' -f 1) lines" || LOG "Before: CSV file doesn't exist"
 	LOG "Before: last line of CSV file: $LASTLINE"
 	LOG "No new entries to be processed..."
 fi
 
-LOG "After: CSV file has $(wc -l "$OUTFILECSV" |cut -d ' ' -f 1) lines"
-LOG "After: last line of CSV file: $(tail -lines=1 "$OUTFILECSV")"
+[ -f "$OUTFILECSV" ] && LOG "After: CSV file has $(wc -l "$OUTFILECSV" |cut -d ' ' -f 1) lines"
+[ -f "$OUTFILECSV" ] && LOG "After: last line of CSV file: $(tail --lines=1 "$OUTFILECSV")"
 
 # now we can stitching the CSV file together:
 if [ -f "$OUTFILETMP" ]
@@ -350,6 +356,11 @@ cat <<EOF >"$OUTFILEHTML"
 <!DOCTYPE html>
 <html>
 <!--
+# You are taking an interest in this code! Great!
+# I'm not a professional programmer, and your suggestions and contributions
+# are always welcome. Join me at the GitHub link shown below, or via email
+# at kx1t (at) amsat (dot) org.
+#
 # Copyright 2020 Ramon F. Kolb - licensed under the terms and conditions
 # of GPLv3. The terms and conditions of this license are included with the Github
 # distribution of this package, and are also available here:
@@ -387,7 +398,7 @@ cat <<EOF >"$OUTFILEHTML"
 
 <body>
 <h1>PlaneFence</h1>
-<h2>Show aircraft in range of ADS-B PiAware station for a specific day</h2>
+<h2>Show aircraft in range of <a href="$MYURL" target="_top">$MY</a> ADS-B PiAware station for a specific day</h2>
 <ul>
    <li>Last update: $(date +"%b %d, %Y %R:%S %Z")
    <li>Maximum distance from <a href="https://www.openstreetmap.org/?mlat=$LAT&mlon=$LON#map=14/$LAT/$LON&layers=H" target=_blank>$LAT $LON</a>: $DIST miles
@@ -399,8 +410,8 @@ WRITEHTMLHISTORY $OUTFILEDIR "$OUTFILEHTML"
 
 cat <<EOF >>"$OUTFILEHTML"
 <div class="footer">
-PlaneFence is based on <a href="https://github.com/kx1t/planefence" target="_blank">KX1T's PlaneFence Open Source Project</a>, available on GitHub.
-&copy; Copyright 2020 by Ram&oacute;n F. Kolb
+PlaneFence $VERSION is part of <a href="https://github.com/kx1t/planefence" target="_blank">KX1T's PlaneFence Open Source Project</a>, available on GitHub.
+<br/>&copy; Copyright 2020 by Ram&oacute;n F. Kolb
 </div>
 </body>
 </html>
