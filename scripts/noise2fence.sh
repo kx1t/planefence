@@ -47,8 +47,8 @@ else
 	NOISEDATE=$(date --date="today" '+%y%m%d')
 fi
 
-# CSVFILE=$CSVNAMEBASE$NOISEDATE$CSVNAMEEXT
-CSVFILE=/tmp/noise.csv
+CSVFILE=$CSVNAMEBASE$NOISEDATE$CSVNAMEEXT
+# CSVFILE=/tmp/noise.csv
 NOISEFILE=$LOGNAMEBASE$NOISEDATE$LOGNAMEEXT
 
 # make sure there's no stray TMP file around, so we can directly append

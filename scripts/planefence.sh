@@ -40,6 +40,7 @@
 	CALCDIST="--calcdist" # if this variable is set to "--calcdist", then planefence.py will calculate the distance relative to LAT and LON as defined above
 	MY="KX1T's" # text for the header of the website
 	MYURL=".." # link for $MY in tge website's header
+	PLANETWEET="PlaneBoston" # Twitter handle for PlaneTweet users
 #
 # *** SPECIAL CONSIDERATION OF LON and LAT
 # Only if CALCDIST="--calcdist", PlaneFence will recalculate every entry to see if it is within DIST of the defined LON/LAT.
@@ -73,7 +74,7 @@
 #	LOGFILE=logger # if $LOGFILE is set to "logger", then the logs are written to /var/log/syslog. This is good for debugging purposes.
 	CURRENT_PID=$$
 	PROCESS_NAME=$(basename $0)
-
+	systemctl is-active --quiet noisecapt && NOISECAPT=1 || NOISECAPT=0
 # -----------------------------------------------------------------------------------
 #
 # Functions
@@ -148,7 +149,8 @@ EOF
 	then
 		LOG "Number of fields in CSV is $MAXFIELDS. Adding NoiseCapt table headers..."
 		cat <<EOF >>"$2"
-		<th>Peak RMS audio</th>
+		<th>Loudness</th>
+		<th>Peak RMS sound</th>
 		<th>1 min avg</th>
 		<th>5 min avg</th>
 		<th>10 min avg</th>
@@ -183,6 +185,8 @@ EOF
 			if (( MAXFIELDS > 7 ))
 			then
 				# print Noise Values
+				printf "<td>%s dB</td>\n" "$(( NEWVALUES[7] - NEWVALUES[11] ))" >>"$2"
+
 				for i in {7..11}
 				do
 					printf "<td>%s dBFS</td>\n" "${NEWVALUES[i]}" >>"$2"
@@ -380,6 +384,12 @@ else
 	LOG "After: No New PlaneFence file as there were no new aircraft in reach"
 fi
 
+# Now check if we need to add noise data to the csv file
+if [ "$NOISECAPT" == "1" ]
+then
+	LOG "Invoking noise2fence!"
+	$PLANEFENCEDIR/noise2fence.sh
+fi
 
 # We also need an updated history file that can be loaded into an IFRAME:
 # print HTML headers first, and a link to the "latest":
@@ -422,7 +432,7 @@ cat <<EOF >"$OUTFILEHTML"
 <head>
     <title>ADS-B 1090 MHz PlaneFence</title>
     <style>
-        body { font: 16px/1.4 "Helvetica Neue", Arial, sans-serif; }
+        body { font: 12px/1.4 "Helvetica Neue", Arial, sans-serif; }
         a { color: #0077ff; }
 	h1 {text-align: center}
 	h2 {text-align: center}
@@ -441,8 +451,31 @@ cat <<EOF >"$OUTFILEHTML"
    <li>Only aircraft below $MAXALT ft are reported.
 EOF
 
+[ "$PLANETWEET" != "" ] && printf "<li>Get notified instantaneously of planes in range by following <a href=\"http://twitter.com/%s\" target=\"_blank\">@%s</a> on Twitter!" "$PLANETWEET" "$PLANETWEET" >> "$OUTFILEHTML"
+
+printf "</ul>" >> "$OUTFILEHTML"
+
 WRITEHTMLTABLE "$OUTFILECSV" "$OUTFILEHTML"
 WRITEHTMLHISTORY $OUTFILEDIR "$OUTFILEHTML"
+
+# Write some extra text if NOISE data is present
+if (( MAXFIELDS > 7 ))
+then
+	cat <<EOF >>"$OUTFILEHTML"
+	<div style="border: none; margin: 0; padding: 0; font: 10px/1.4 'Helvetica Neue', Arial, sans-serif;">
+	<h4>Note on sound level data:</h4>
+	<ul>
+	   <li>This data is for informational purposes only and is of indicative value only. It was collected using a non-calibrated device under uncontrolled circumstances.
+	   <li>The data unit is &quot;dBFS&quot; (Decibels-Full Scale). 0 dBFS is the loudest sound the device can capture. Lower values, like -99 dBFS, mean very low noise. Higher values, like -10 dBFS, are very loud.
+	   <li>The system measures the <a href="https://en.wikipedia.org/wiki/Root_mean_square" target="_blank">RMS</a> of the sound level for contiguous periods of 5 seconds.
+	   <li>'Loudness' is the difference (in dB) between the Peak RMS Sound and the 1 hour average. It provides an indication of how much louder than normal it was when the aircraft flew over.
+	   <li>'Peak RMS Sound' is the highest measured 5-seconds RMS value during the time the aircraft was in the coverage area.
+	   <li>The subsequent values are 1, 5, 10, and 60 minutes averages of these 5 second RMS measurements for the period leading up to the moment the aircraft left the coverage area.
+	   <li>One last, but important note: The reported sound levels are general outdoor ambient noise in an exurban environment. The system doesn't just capture airplane noise, but also trucks on a nearby highway, lawnmowers, children playing, people working on their projects, air conditioner noise, etc.
+	<ul>
+	</div>
+EOF
+fi
 
 cat <<EOF >>"$OUTFILEHTML"
 <div class="footer">

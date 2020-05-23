@@ -117,8 +117,8 @@ def main(argv):
 	  # first check if we already have a flight number. If we don't, there may be one in the updated record we could use?
           if records[np.where(records == row[0])[0][0]][1] == "" and row[11].strip() != "":
 	     records[np.where(records == row[0])[0][0]][1] = row[11].strip()
-             # records[np.where(records == row[0])[0][0]][6] = 'https://flightaware.com/live/flight/' + row[11].strip() + '/history'
-             records[np.where(records == row[0])[0][0]][6] = 'https://flightaware.com/live/modes/' + row[0].lower() + '/ident/' + row[11].strip() + '/redirect'
+             falink = 'https://flightaware.com/live/modes/' + row[0].lower() + '/ident/' + row[11].strip() + '/redirect'
+             records[np.where(records == row[0])[0][0]][6] = falink.strip()
 	  # replace "LastHeard" by the time in this row:
           records[np.where(records == row[0])[0][0]][3] = row[4] + ' ' + row[5][:8]
           # only replace the lowest altitude if it's smaller than what we had before
@@ -134,7 +134,8 @@ def main(argv):
               print counter, row[0], row[11].strip(), "(", rowdist, "<=", dist, ", alt=", rowalt, "): new"
 	      counter = counter + 1
            # records=np.vstack([records, np.array([row[0],row[11].strip(), row[4] + ' ' + row[5][:8], row[4] + ' ' + row[5][:8],row[1],"{:.1f}".format(rowdist),'https://flightaware.com/live/flight/' + row[11].strip() + '/history' if row[11].strip()<>"" else ''])])    
-           records=np.vstack([records, np.array([row[0],row[11].strip(), row[4] + ' ' + row[5][:8], row[4] + ' ' + row[5][:8],row[1],"{:.1f}".format(rowdist),'https://flightaware.com/live/modes/' + row[0].lower() + '/ident/'+ row[11].strip() + '/redirect' if row[11].strip()<>"" else ''])])    
+	   falink = 'https://flightaware.com/live/modes/' + row[0].lower() + '/ident/' + row[11].strip() + '/redirect'
+           records=np.vstack([records, np.array([row[0],row[11].strip(), row[4] + ' ' + row[5][:8], row[4] + ' ' + row[5][:8],row[1],"{:.1f}".format(rowdist),falink.strip() if row[11].strip()<>"" else ''])])
 	   fltcounter = fltcounter + 1
 
      # Now, let's start writing everything to a CSV and/or HTML file:

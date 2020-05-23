@@ -27,7 +27,7 @@
 # HTMLDIR indicates where we can find the CSV files that PlaneFence produces:
 	HTMLDIR=/usr/share/dump1090-fa/html/planefence
 # HEADR determines the tags for each of the fields in the Tweet:
-	HEADR=("Transponder ID" "Flight" "Time in range" "Time out of range" "Min. Alt. (ft)" "Min. Dist. (miles)" "Link")
+	HEADR=("Transponder ID" "Flight" "Time in range" "Time out of range" "Min. Alt. (ft)" "Min. Dist. (miles)" "Link" "Loudness")
 # CSVFILE termines which file name we need to look in. We're using the 'date' command to
 # get a filename in the form of 'planefence-200504.csv' where 200504 is yymmdd
 	TODAYCSV=$(date -d today +"planefence-%y%m%d.csv")
@@ -43,7 +43,7 @@
 	VERBOSE=1
 	LOGFILE=/tmp/planetweet.log
 	TMPFILE=/tmp/planetweet.tmp
-	VERSION=0.140520.1100
+	VERSION=0.2
 	TWEETON=yes
 # -----------------------------------------------------------------------------------
 # Open Issues, features, and bugs:
@@ -77,7 +77,7 @@
 
 	# Here we go for real:
 	LOG "-----------------------------------------------------" 1
-	LOG "Starting up PlaneFence" 1
+	LOG "Starting up PlaneTweet at $(date)" 1
 	# Upon startup, let's retrieve the last heard plane
 	# We'll do a little trickery to avoid flow-over problems at midnight
 	# First, we'll fill LASTPLANE with a fallback value:
@@ -139,15 +139,22 @@
 		# If so, we must tweet!
 		if [ "${OLDPLN[0]}" != "${NEWPLN[0]}" ] && [ "$NEWPLANE" != "nothing" ] ; then
 			LOG "Tweeting..." 1
+			LOG "BTW Field7=$((NEWPLN[7]))" 1
 			# Create a Tweet with the first 6 fields, each of them followed by a Newline character
 			TWEET="${HEADR[0]}: ${NEWPLN[0]}%0A"
 			for i in {1..5}
 			do
 				TWEET="$TWEET${HEADR[i]}: ${NEWPLN[i]}%0A"
 			done
+
+			# If there is sound level data, then add a Loudness factor (peak RMS - 1 hr avg) to the tweet.
+			# There is more data we could tweet, but we're a bit restricted in real estate on twitter.
+			(( NEWPLN[7] < 0 )) && TWEET="$TWEET${HEADR[7]}: $(( NEWPLN[7] - NEWPLN[11] )) dB%0A"
+
 			# Now add the last field without title or training Newline
 			# Reason: this is a URL that Twitter reinterprets and previews on the web
 			# Also, the Newline at the end tends to mess with Twurl
+
 			TWEET="$TWEET${NEWPLN[6]}"
 			LOG "Tweet msg body: $TWEET" 1
 			if [ "$TWEETON" = "yes" ]; then
