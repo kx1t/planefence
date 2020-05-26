@@ -40,7 +40,12 @@
 	CALCDIST="--calcdist" # if this variable is set to "--calcdist", then planefence.py will calculate the distance relative to LAT and LON as defined above
 	MY="KX1T's" # text for the header of the website
 	MYURL=".." # link for $MY in tge website's header
-	PLANETWEET="PlaneBoston" # Twitter handle for PlaneTweet users
+	PLANETWEET="PlaneBoston" # Twitter handle for PlaneTweet. Comment this out if PlaneTweet is not available or disabled
+	RED="LightCoral" # background cell color for Loudness
+	YELLOW="Gold" # background cell color for Loudness
+	GREEN="YellowGreen" # background cell color for Loudness
+	GREENLIMIT=9 # Max. Loudness level to be shown green
+	YELLOWLIMIT=16 # Max. Loudness level to be shown yelloe
 #
 # *** SPECIAL CONSIDERATION OF LON and LAT
 # Only if CALCDIST="--calcdist", PlaneFence will recalculate every entry to see if it is within DIST of the defined LON/LAT.
@@ -77,6 +82,9 @@
 	systemctl is-active --quiet noisecapt && NOISECAPT=1 || NOISECAPT=0
 # -----------------------------------------------------------------------------------
 #
+# Let's see if there is a CONF file that overwrites some of the parameters already defined
+[ -f "$PLANEFENCEDIR/planefence.conf" ] && source "$PLANEFENCEDIR/planefence.conf"
+#
 # Functions
 #
 # First create an function to write to the log
@@ -86,7 +94,7 @@ LOG ()
 	then
 	      IN="$1"
 	else
-	      read IN # This reads a string from stdin and stores it in a variable called IN
+	      read IN # This reads a string from stdin and stores it in a variable called IN. This enables things like 'echo hello world > LOG'
 	fi
 
 	if [ "$VERBOSE" != "" ]
@@ -175,17 +183,29 @@ EOF
 		if [ "${#NEWVALUES[0]}" == "6" ]
 		then
 			printf "<tr>\n" >>"$2"
-			printf "<td>%s</td>" "$COUNTER" >>"$2"
-			printf "<td>%s</td>\n" "${NEWVALUES[0]}" >>"$2"
-			printf "<td><a href=\"%s\" target=\"_blank\">%s</a></td>\n" "${NEWVALUES[6]}" "${NEWVALUES[1]}" >> "$2"
-			printf "<td>%s</td>\n" "${NEWVALUES[2]}" >>"$2"
-			printf "<td>%s</td>\n" "${NEWVALUES[3]}" >>"$2"
-			printf "<td>%s ft</td>\n" "${NEWVALUES[4]}" >>"$2"
-			printf "<td>%s mi</td>\n" "${NEWVALUES[5]}" >>"$2"
+			printf "<td>%s</td>" "$COUNTER" >>"$2" # table index number
+			printf "<td>%s</td>\n" "${NEWVALUES[0]}" >>"$2" # ICAO Hex ID
+			# if the flight number start with \@ then strip that in the HTML representation
+			# (\@ is written as the first character of the flight number by PlaneTweet if it has already tweeted the record)
+			if [ "${NEWVALUES[1]:0:1}" == "@" ]
+			then
+				printf "<td><a href=\"%s\" target=\"_blank\">%s</a></td>\n" "${NEWVALUES[6]}" "${NEWVALUES[1]:1}" >> "$2"
+			else
+				printf "<td><a href=\"%s\" target=\"_blank\">%s</a></td>\n" "${NEWVALUES[6]}" "${NEWVALUES[1]}" >> "$2"
+			fi
+			printf "<td>%s</td>\n" "${NEWVALUES[2]}" >>"$2" # time first seen
+			printf "<td>%s</td>\n" "${NEWVALUES[3]}" >>"$2" # time last seen
+			printf "<td>%s ft</td>\n" "${NEWVALUES[4]}" >>"$2" # min altitude
+			printf "<td>%s mi</td>\n" "${NEWVALUES[5]}" >>"$2" # min distance
 			if (( MAXFIELDS > 7 ))
 			then
+				# determine cell bgcolor
+				(( LOUDNESS = NEWVALUES[7] - NEWVALUES[11] ))
+				COLOR="$RED"
+				((  LOUDNESS <= YELLOWLIMIT )) && COLOR="$YELLOW"
+				((  LOUDNESS <= GREENLIMIT )) && COLOR="$GREEN"
 				# print Noise Values
-				printf "<td>%s dB</td>\n" "$(( NEWVALUES[7] - NEWVALUES[11] ))" >>"$2"
+				printf "<td style=\"background-color: %s\">%s dB</td>\n" "$COLOR" "$LOUDNESS" >>"$2"
 
 				for i in {7..11}
 				do
@@ -221,22 +241,24 @@ WRITEHTMLHISTORY () {
         fi
 
 	cat <<EOF >>"$2"
-		<p class="history">
-		Historical data: Latest: <a href="index.html" target="_top">html</a> - <a href="planefence-$FENCEDATE.csv" target="_top">csv</a>
+		<div class="history">
+		<h4>Historical data</h4>
+		<p>Today: <a href="index.html" target="_top">html</a> - <a href="planefence-$FENCEDATE.csv" target="_top">csv</a>
 EOF
 
 	# loop through the existing files. Note - if you change the file format, make sure to yodate the arguments in the line
 	# right below. Right now, it lists all files that have the planefence-20*.html format (planefence-200504.html, etc.), and then
 	# picks the newest 7 (or whatever HISTTIME is set to), reverses the strings to capture the characters 6-11 from the right, which contain the date (200504)
 	# and reverses the results back so we get only a list of dates in the format yymmdd.
-	for d in $(ls -1 "$1"/planefence-*[!e].html | tail --lines=$HISTTIME | rev | cut -c6-11 | rev | sort -r)
+	for d in $(ls -1 "$1"/planefence-*[!e].html | tail --lines=$((HISTTIME+1)) | head --lines=$HISTTIME | rev | cut -c6-11 | rev | sort -r)
 	do
 	       	printf " | %s" "$(date -d "$d" +%d-%b-%Y): " >> "$2"
 		printf "<a href=\"%s\" target=\"_top\">html</a> - " "planefence-$(date -d "$d" +"%y%m%d").html" >> "$2"
 		printf "<a href=\"%s\" target=\"_top\">csv</a>" "planefence-$(date -d "$d" +"%y%m%d").csv" >> "$2"
 	done
 	printf "</p>\n" >> "$2"
-	printf "<p class=\"history\">Additional dates may be available by browsing to planefence-yymmdd.html in this directory.</p>" >> "$2"
+	printf "<p>Additional dates may be available by browsing to planefence-yymmdd.html in this directory.</p>" >> "$2"
+	printf "</div>\n" >> "$2"
 
 	# and print the footer:
         if [ "$3" == "standalone" ]
@@ -389,6 +411,17 @@ if [ "$NOISECAPT" == "1" ]
 then
 	LOG "Invoking noise2fence!"
 	$PLANEFENCEDIR/noise2fence.sh
+else
+	LOG "Info: Noise2Fence not enabled"
+fi
+
+# And see if we need to invoke PlaneTweet:
+if [ ! -z "$PLANETWEET" ]
+then
+	LOG "Invoking PlaneTweet!"
+	$PLANEFENCEDIR/planetweet.sh
+else
+	LOG "Info: PlaneTweet not enabled"
 fi
 
 # We also need an updated history file that can be loaded into an IFRAME:
@@ -437,7 +470,7 @@ cat <<EOF >"$OUTFILEHTML"
 	h1 {text-align: center}
 	h2 {text-align: center}
 	.planetable { border: 1; margin: 0; padding: 0; font: 12px/1.4 "Helvetica Neue", Arial, sans-serif; text-align: center }
-	.history { border: none; margin: 0; padding: 0; font: 12px/1.4 "Helvetica Neue", Arial, sans-serif; }
+	.history { border: none; margin: 0; padding: 0; font: 10px/1.4 "Helvetica Neue", Arial, sans-serif; }
 	.footer{ border: none; margin: 0; padding: 0; font: 8px/1.4 "Helvetica Neue", Arial, sans-serif; text-align: center }
     </style>
 </head>
@@ -448,7 +481,8 @@ cat <<EOF >"$OUTFILEHTML"
 <ul>
    <li>Last update: $(date +"%b %d, %Y %R:%S %Z")
    <li>Maximum distance from <a href="https://www.openstreetmap.org/?mlat=$LAT&mlon=$LON#map=14/$LAT/$LON&layers=H" target=_blank>$LAT $LON</a>: $DIST miles
-   <li>Only aircraft below $MAXALT ft are reported.
+   <li>Only aircraft below $(printf "%'.0d" $MAXALT) ft are reported.
+   <li>Data extracted from $(printf "%'.0d" $CURRCOUNT) <a href="https://en.wikipedia.org/wiki/Automatic_dependent_surveillance_%E2%80%93_broadcast" target="_blank">ADS-B messages</a> received since midnight today.
 EOF
 
 [ "$PLANETWEET" != "" ] && printf "<li>Get notified instantaneously of planes in range by following <a href=\"http://twitter.com/%s\" target=\"_blank\">@%s</a> on Twitter!" "$PLANETWEET" "$PLANETWEET" >> "$OUTFILEHTML"
@@ -456,19 +490,20 @@ EOF
 printf "</ul>" >> "$OUTFILEHTML"
 
 WRITEHTMLTABLE "$OUTFILECSV" "$OUTFILEHTML"
-WRITEHTMLHISTORY $OUTFILEDIR "$OUTFILEHTML"
+WRITEHTMLHISTORY "$OUTFILEDIR" "$OUTFILEHTML"
 
 # Write some extra text if NOISE data is present
 if (( MAXFIELDS > 7 ))
 then
 	cat <<EOF >>"$OUTFILEHTML"
 	<div style="border: none; margin: 0; padding: 0; font: 10px/1.4 'Helvetica Neue', Arial, sans-serif;">
-	<h4>Note on sound level data:</h4>
+	<h4>Notes on sound level data:</h4>
 	<ul>
 	   <li>This data is for informational purposes only and is of indicative value only. It was collected using a non-calibrated device under uncontrolled circumstances.
 	   <li>The data unit is &quot;dBFS&quot; (Decibels-Full Scale). 0 dBFS is the loudest sound the device can capture. Lower values, like -99 dBFS, mean very low noise. Higher values, like -10 dBFS, are very loud.
 	   <li>The system measures the <a href="https://en.wikipedia.org/wiki/Root_mean_square" target="_blank">RMS</a> of the sound level for contiguous periods of 5 seconds.
 	   <li>'Loudness' is the difference (in dB) between the Peak RMS Sound and the 1 hour average. It provides an indication of how much louder than normal it was when the aircraft flew over.
+	   <li>Loudness values of greater than $YELLOWLIMIT dB are in red. Values greater than $GREENLIMIT dB are in yellow.
 	   <li>'Peak RMS Sound' is the highest measured 5-seconds RMS value during the time the aircraft was in the coverage area.
 	   <li>The subsequent values are 1, 5, 10, and 60 minutes averages of these 5 second RMS measurements for the period leading up to the moment the aircraft left the coverage area.
 	   <li>One last, but important note: The reported sound levels are general outdoor ambient noise in an exurban environment. The system doesn't just capture airplane noise, but also trucks on a nearby highway, lawnmowers, children playing, people working on their projects, air conditioner noise, etc.
