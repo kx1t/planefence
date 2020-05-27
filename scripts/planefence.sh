@@ -153,9 +153,8 @@ WRITEHTMLTABLE () {
 	<th>Min. Altitude</th>
 	<th>Min. Distance</th>
 EOF
-	if (( MAXFIELDS > 7 ))
+	if (( MAXFIELDS > 10 ))
 	then
-		LOG "Number of fields in CSV is $MAXFIELDS. Adding NoiseCapt table headers..."
 		cat <<EOF >>"$2"
 		<th>Loudness</th>
 		<th>Peak RMS sound</th>
@@ -164,9 +163,18 @@ EOF
 		<th>10 min avg</th>
 		<th>1 hr avg</th>
 EOF
+		if (( MAXFIELDS > 12 ))
+		then
+			# there's Twitter info in field 12
+			printf "<th>Tweeted</th>" >> "$2"
+			LOG "Number of fields in CSV is $MAXFIELDS. Adding NoiseCapt and Tweeted table headers..."
+		else
+			LOG "Number of fields in CSV is $MAXFIELDS. Adding NoiseCapt table headers..."
+		fi
 	else
 		LOG "Number of fields in CSV is $MAXFIELDS. Not adding NoiseCapt table headers!"
 	fi
+
 	printf "</tr>\n" >>"$2"
 
 	# Now write the table
@@ -185,6 +193,7 @@ EOF
 			printf "<tr>\n" >>"$2"
 			printf "<td>%s</td>" "$COUNTER" >>"$2" # table index number
 			printf "<td>%s</td>\n" "${NEWVALUES[0]}" >>"$2" # ICAO Hex ID
+
 			# if the flight number start with \@ then strip that in the HTML representation
 			# (\@ is written as the first character of the flight number by PlaneTweet if it has already tweeted the record)
 			if [ "${NEWVALUES[1]:0:1}" == "@" ]
@@ -193,11 +202,14 @@ EOF
 			else
 				printf "<td><a href=\"%s\" target=\"_blank\">%s</a></td>\n" "${NEWVALUES[6]}" "${NEWVALUES[1]}" >> "$2"
 			fi
+
 			printf "<td>%s</td>\n" "${NEWVALUES[2]}" >>"$2" # time first seen
 			printf "<td>%s</td>\n" "${NEWVALUES[3]}" >>"$2" # time last seen
 			printf "<td>%s ft</td>\n" "${NEWVALUES[4]}" >>"$2" # min altitude
 			printf "<td>%s mi</td>\n" "${NEWVALUES[5]}" >>"$2" # min distance
-			if (( MAXFIELDS > 7 ))
+
+			# If MAXFIELDS>10 then there is definitely audio information.
+			if (( MAXFIELDS > 10 ))
 			then
 				# determine cell bgcolor
 				(( LOUDNESS = NEWVALUES[7] - NEWVALUES[11] ))
@@ -211,11 +223,36 @@ EOF
 				do
 					printf "<td>%s dBFS</td>\n" "${NEWVALUES[i]}" >>"$2"
 				done
+				if [ "${NEWVALUES[1]:0:1}" == "@" ]
+				then
+					# a tweet was sent. If there is info in field 12, then put a link, otherwise simple say "yes"
+					if  [ "${NEWVALUES[12]}" != "" ]
+					then
+						# there's tweet info in this field
+						printf "<td><a href=\"http://twitter.com/%s/status/%s\" target=\"_new\">yes</a></td>\n" "$PLANETWEET" "$(echo ${NEWVALUES[12]} | tr -c -d '[:alnum:]')" >> "$2"
+					else
+						printf "<td>yes</td>\n" >> "$2"
+					fi
+				fi
+			else
+				# figure out if there's tweet information:
+                                if [ "${NEWVALUES[1]:0:1}" == "@" ]
+                                then
+                                        # a tweet was sent. If there is info in field 7, then put a link, otherwise simple say "yes"
+                                        if  [ "${NEWVALUES[7]}" != "" ]
+                                        then
+                                                # there's tweet info in this field
+                                                printf "<td><a href=\"http://twitter.com/%s/status/%s\" target=\"_new\">yes</a></td>\n" "$PLANETWEET" "$(echo ${NEWVALUES[7]} | tr -c -d '[:alnum:]')" >> "$2"
+                                        else
+                                                printf "<td>yes</td>\n" >> "$2"
+                                        fi
+                                fi
+
 			fi
 			printf "</tr>\n" >>"$2"
 		fi
 	    fi
-	  done < "$1"
+	  done < "$1" # while read -r NEWLINE
 	fi
 	printf "</table>\n" >>"$2"
 	if [ "$COUNTER" == "0" ]
