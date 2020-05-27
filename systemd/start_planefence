@@ -42,7 +42,7 @@
 #
 # LOOPTIME is the time between two runs of PlaneFence (in seconds)
 # Do not set this to less than about 120 seconds as it will overload your system
-LOOPTIME=80
+LOOPTIME=120
 #
 # PLANEFENCEDIR contains the directory where planefence.sh is location 
 PLANEFENCEDIR=/usr/share/planefence
