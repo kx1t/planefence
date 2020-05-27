@@ -79,15 +79,15 @@ sudo apt install python-pip python-numpy python-pandas python-dateutil
 sudo pip install tzlocal
 ```
 
-### Edit the scripts
-## planefence.sh
-Planefence.sh is the work horse of this project. It makes sure that everything is invoked and generated correctly, and corrects any issues or duplicates that the system may generated. You should make sure that the variables are set to appropriate values for your situation. Here's how to do that:
+### Edit the configuration files
+## planefence.conf
+Planefence.sh is the work horse of this project. It makes sure that everything is invoked and generated correctly, and corrects any issues or duplicates that the system may generated. You should make sure that the variables are set to appropriate values for your situation. These variables are stored in `planefence.conf`. Here's how to do that:
 
 ```
-nano /usr/share/planefence/planefence.sh
+nano /usr/share/planefence/planefence.conf
 ```
 
-- Go to the lines between the dashed separators and read the instruction/commentary. You should consider changing at least the following:
+- Read the instruction/commentary. You should consider changing at least the following:
 - `OUTFILEDIR` contains your *planefence directory* name. If you have a different name, change it there
 - `PLANEFENCEDIR` contains the directory name where `planefence.py` is located. If you followed the instructions above, you won't need to change this.
 - `MAXALT` contains the altitude ceiling in ft. `MAXALT=5000` means that only planes that are 5000 ft or lower are tracked
@@ -100,7 +100,7 @@ It invokes PlaneFence every approx. 2 minutes. I highly suggest not to change th
 ```
 nano /usr/share/planefence/start_planefence
 ```
-The only parameter you could change here, is `LOOPTIME`, which contains the time between two runs of PlaneFence. I strongly suggest to make this no shorter than 2 minutes, to avoid overloading your system.
+The only parameter you could change here, is `LOOPTIME`, which contains the time between two runs of PlaneFence. I strongly suggest to make this no shorter than 60 seconds, to avoid overloading your system.
 
 ### Install the PlaneFence Systemd Service
 PlaneFence uses SystemD to run as a daemon. Daemons are programs that run in the background without user interaction.
