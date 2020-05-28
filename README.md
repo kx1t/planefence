@@ -75,7 +75,7 @@ Type the following:
 ```
 sudo apt update
 sudo apt upgrade
-sudo apt install python-pip python-numpy python-pandas python-dateutil
+sudo apt install python-pip python-numpy python-pandas python-dateutil jq
 sudo pip install tzlocal
 ```
 
