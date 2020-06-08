@@ -25,7 +25,7 @@
 
 # These are the input and output directories and file names
 # HEADR determines the tags for each of the fields in the Tweet:
-        HEADR=("Transponder ID" "Flight" "Time in range" "Time out of range" "Min. Alt. (ft)" "Min. Dist. (miles)" "Link" "Loudness")
+        HEADR=("Transponder ID" "Flight" "Time in range" "Time out of range" "Min. Alt. (ft)" "Min. Dist. (miles)" "Link" "Loudness" "Peak Audio Level")
 # CSVFILE termines which file name we need to look in. We're using the 'date' command to
 # get a filename in the form of 'planefence-200504.csv' where 200504 is yymmdd
         TODAYCSV=$(date -d today +"planefence-%y%m%d.csv")
@@ -41,7 +41,6 @@
         VERBOSE=1
         LOGFILE=/tmp/planetweet.log
         TMPFILE=/tmp/planetweet.tmp
-        VERSION=0.2
         TWEETON=yes
 	CSVDIR=/usr/share/dump1090-fa/html/planefence
 	CSVNAMEBASE=$CSVDIR/planefence-
@@ -56,7 +55,7 @@
 # Additional variables:
 	CURRENT_PID=$$
 	PROCESS_NAME=$(basename $0)
-	VERSION=2.0rc1
+	VERSION=2.0rc2
 # -----------------------------------------------------------------------------------
 #
 # First create an function to write to the log
@@ -112,7 +111,7 @@ then
 
                         # If there is sound level data, then add a Loudness factor (peak RMS - 1 hr avg) to the tweet.
                         # There is more data we could tweet, but we're a bit restricted in real estate on twitter.
-                        (( RECORD[7] < 0 )) && TWEET="$TWEET${HEADR[7]}: $(( RECORD[7] - RECORD[11] )) dB%0A"
+                        (( RECORD[7] < 0 )) && TWEET="$TWEET${HEADR[8]}: ${RECORD[7]} dBFS%0A${HEADR[7]}: $(( RECORD[7] - RECORD[11] )) dB%0A"
 
                         # Now add the last field without title or training Newline
                         # Reason: this is a URL that Twitter reinterprets and previews on the web
@@ -127,11 +126,17 @@ then
 
 			# And now, let's tweet!
                         if [ "$TWEETON" == "yes" ]; then
-                                $TWURLPATH/twurl -q -r "status=$TWEET" /1.1/statuses/update.json
+                                # $TWURLPATH/twurl -q -r "status=$TWEET" /1.1/statuses/update.json
+				# send a tweet and read the link to the tweet into ${LINK[1]}
+				LINK=$(echo `$TWURLPATH/twurl -r "status=$TWEET" /1.1/statuses/update.json` | tee -a /tmp/tweets.log | jq '.entities."urls" | .[] | .url' | tr -d '\"')
 			else
 				LOG "(A tweet would have been sent but \$TWEETON=\"$TWEETON\")"
                         fi
+
+			# Add a reference to the tweet to RECORD[7] (if no audio is available) or RECORD[11] (if audio is available)
+			(( RECORD[7] < 0 )) && RECORD[12]="$LINK" || RECORD[7]="$LINK"
                         # LOG "Tweet sent!"
+			LOG "TWIRL results: $LINK"
 
 		else
 			LOG "Assessing ${RECORD[0]}: ${RECORD[1]:0:1}; diff=$TIMEDIFF secs; Skipping: either already tweeted, or within $MINTIME secs."
@@ -139,7 +144,7 @@ then
 
 		# Now write everything back to $CSVTMP
 		( IFS=','; echo "${RECORD[*]}" >> "$CSVTMP" )
-		# LOG "The record now contains $(IFS=','; echo ${RECORD[*]})"
+		 LOG "The record now contains $(IFS=','; echo ${RECORD[*]})"
 
 
 	done < "$CSVFILE"
