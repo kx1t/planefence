@@ -25,75 +25,41 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see https://www.gnu.org/licenses/.
 # -----------------------------------------------------------------------------------
-# Feel free to make changes to the variables between these two lines. However, it is
-# STRONGLY RECOMMENDED to RTFM! See README.md for explanation of what these do.
-# These are the input and output directories and file names:
-	OUTFILEDIR=/usr/share/dump1090-fa/html/planefence # the web directory you want PlaneFence to write to
-	PLANEFENCEDIR=/usr/share/planefence # the directory where this file and planefence.py are located
-	MAXALT=5000 # only planes below this altitude are reported. Must correspond to your socket30003 altitude unit
-	DIST=2.5 # only planes closer than this distance are reported. If CALCDIST (below) is set to "--calcdist", then the distance is in statute miles
-#		   if CALCDIST="", then the unit is whatever you used in your socket30003 setup
-	LAT=42.39663 # Latitude of the center point of the map. *** SEE BELOW
-	LON=-71.17726 # Longitude of the center point of the map. *** SEE BELOW
-	HISTTIME=7 # number of days shown in the history section of the website
-#	CALCDIST="" # if this variable is set to "", then planefence.py will use the reported distance from your station instead of recalculating it
-	CALCDIST="--calcdist" # if this variable is set to "--calcdist", then planefence.py will calculate the distance relative to LAT and LON as defined above
-	MY="KX1T's" # text for the header of the website
-	MYURL=".." # link for $MY in tge website's header
-	PLANETWEET="PlaneBoston" # Twitter handle for PlaneTweet. Comment this out if PlaneTweet is not available or disabled
-	PLANEHEATSCRIPT=$PLANEFENCEDIR/planeheat.sh # comment this out if you don't use PlaneHeat
-	RED="LightCoral" # background cell color for Loudness
-	YELLOW="Gold" # background cell color for Loudness
-	GREEN="YellowGreen" # background cell color for Loudness
-	GREENLIMIT=9 # Max. Loudness level to be shown green
-	YELLOWLIMIT=16 # Max. Loudness level to be shown yelloe
 #
-# *** SPECIAL CONSIDERATION OF LON and LAT
-# Only if CALCDIST="--calcdist", PlaneFence will recalculate every entry to see if it is within DIST of the defined LON/LAT.
-# If you set CALCDIST to "", then it will use the reported distance as configured in socket30003.cfg (see the documentation of that package).
-# Recalculating the distances is a bit more processor-intensive than using the reported values, so ONLY set CALCDIST="--calcdist" if
-# you want the center-point of PlaneFence to be somewhere that is not your station's exact LAT/LON.
-# Note that the link in the HTML page headings always uses the LAT/LON as defined above. You can use that to obfuscate your exact location.
+# The variables and program parameters have been moved to 'planefence.conf'. Please
+# make changes there.
 # -----------------------------------------------------------------------------------
 # Only change the variables below if you know what you are doing.
-	if [ "$1" != "" ] && [ "$1" != "reset" ]
-	then # $1 contains the date for which we want to run PlaneFence
-		FENCEDATE=$(date --date="$1" '+%y%m%d')
-	else
-		FENCEDATE=$(date --date="today" '+%y%m%d')
-	fi
 
-	TMPDIR=/tmp
-	LOGFILEBASE=$TMPDIR/dump1090-127_0_0_1-
-	OUTFILEBASE=$OUTFILEDIR/planefence
-	OUTFILEHTML=$OUTFILEBASE-$FENCEDATE.html
-	OUTFILECSV=$OUTFILEBASE-$FENCEDATE.csv
-	OUTFILETMP=$TMPDIR/dump1090-pf-temp.csv
-	PLANEHEATHTML=$OUTFILEBASE-$FENCEDATE-heatmap.html
-	INFILETMP=$TMPDIR/dump1090-pf.txt
-	TMPLINES=$TMPDIR/dump1090-pf-temp-$FENCEDATE.tmp
-	VERBOSE="--verbose"
-#	VERBOSE=""
-	HISTORY=history.html
-	HISTFILE=$OUTFILEDIR/$HISTORY
-	VERSION=3.1
-	LOGFILE=/tmp/planefence.log
-#	LOGFILE=logger # if $LOGFILE is set to "logger", then the logs are written to /var/log/syslog. This is good for debugging purposes.
-	CURRENT_PID=$$
-	PROCESS_NAME=$(basename $0)
-	systemctl is-active --quiet noisecapt && NOISECAPT=1 || NOISECAPT=0
+# FENCEDATE will be the date [yymmdd] that we want to process PlaneFence for.
+# The default value is 'today'.
+
+if [ "$1" != "" ] && [ "$1" != "reset" ]
+then # $1 contains the date for which we want to run PlaneFence
+	FENCEDATE=$(date --date="$1" '+%y%m%d')
+else
+	FENCEDATE=$(date --date="today" '+%y%m%d')
+fi
+
+CURRENT_PID=$$
+PROCESS_NAME=$(basename $0)
+systemctl is-active --quiet noisecapt && NOISECAPT=1 || NOISECAPT=0
 # -----------------------------------------------------------------------------------
 #
-# Let's see if there is a CONF file that overwrites some of the parameters already defined
-[ -f "$PLANEFENCEDIR/planefence.conf" ] && source "$PLANEFENCEDIR/planefence.conf"
 
-LOGFILE=/dev/stdout
-
+# Read the parameters from the config file
+if [ -f "$PLANEFENCEDIR/planefence.conf" ]
+then
+	source "$PLANEFENCEDIR/planefence.conf"
+else
+	echo $PLANEFENCEDIR/planefence.conf is missing. We need it to run PlaneFence! Go back to GitHub and get it from there!
+	exit 2
+fi
 
 #
 # Functions
 #
-# First create an function to write to the log
+# Function to write to the log
 LOG ()
 {
 	if [ -n "$1" ]
@@ -105,19 +71,11 @@ LOG ()
 
 	if [ "$VERBOSE" != "" ]
 	then
-		# set the color scheme in accordance to the log level urgency
-		if [ "$2" == "1" ]; then
-			COLOR="${blue}"
-		elif [ "$2" == "2" ]; then
-			COLOR="${red}"
-		else
-			COLOR=""
-		fi
 		if [ "$LOGFILE" == "logger" ]
 		then
-			printf "%s-%s[%s]v%s: %s%s${normal}\n" "$(date +"%Y%m%d-%H%M%S")" "$PROCESS_NAME" "$CURRENT_PID" "$VERSION" "$COLOR" "$IN" | logger
+			printf "%s-%s[%s]v%s: %s\n" "$(date +"%Y%m%d-%H%M%S")" "$PROCESS_NAME" "$CURRENT_PID" "$VERSION" "$IN" | logger
 		else
-			printf "%s-%s[%s]v%s: %s%s${normal}\n" "$(date +"%Y%m%d-%H%M%S")" "$PROCESS_NAME" "$CURRENT_PID" "$VERSION" "$COLOR" "$IN" >> $LOGFILE
+			printf "%s-%s[%s]v%s: %s\n" "$(date +"%Y%m%d-%H%M%S")" "$PROCESS_NAME" "$CURRENT_PID" "$VERSION" "$IN" >> $LOGFILE
 		fi
 	fi
 }
