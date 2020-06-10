@@ -43,11 +43,6 @@ git clone https://github.com/kx1t/planefence.git
 cd planefence
 ```
 
-Note -- currently, PlaneFence v3.0 is on a separate branch called `dev`. In order to make sure you are installing the software from this branch, please issue the following commands:
-```
-git fetch --all
-git checkout dev
-```
 ### Make a planefence directory in your existing HTML directory
 Under normal circumstances, your FlightAware or dump1090 maps are rendered in this directory:
 `/usr/share/dump1090-fa/html/` or `/usr/share/dump1090/html/`
