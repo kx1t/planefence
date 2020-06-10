@@ -24,12 +24,13 @@ def main(argv):
    goodcount=0
    badcount=0
    calcdist = False
+   linkservice = 'adsbx'
 
    now_utc = datetime.now(timezone('UTC'))
    now = now_utc.astimezone(get_localzone())
 
    try:
-      opts, args = getopt.getopt(argv,'',["h","help","?","distance=","lat=","long=","dist=","log=","logfile=","v","verbose","outfile=","maxalt=","calcdist"])
+      opts, args = getopt.getopt(argv,'',["h","help","?","distance=","lat=","long=","dist=","log=","logfile=","v","verbose","outfile=","maxalt=","calcdist","link="])
    except getopt.GetoptError:
       print 'ERROR. Usage: distance.py [--verbose] --distance=<distance_in_km> --logfile=/path/to/logfile'
       sys.exit(2)
@@ -57,6 +58,8 @@ def main(argv):
 	 maxalt = float(arg)
       elif opt == "--calcdist":
 	 calcdist = True
+      elif opt == "--link":
+	 linkservice = arg
 
    if verbose == 1:
       # print 'lat = ', lat
@@ -71,6 +74,10 @@ def main(argv):
 
    if verbose == 1:
       print 'input is read from ', logfile
+
+   if linkservice != 'adsbx' and linkservice != 'fa':
+      print "ERROR: --link parameter must be adsbx or fa"
+      sys.exit(2)
 
    lat1 = math.radians(float(lat))
    lon1 = math.radians(float(lon))
@@ -117,7 +124,12 @@ def main(argv):
 	  # first check if we already have a flight number. If we don't, there may be one in the updated record we could use?
           if records[np.where(records == row[0])[0][0]][1] == "" and row[11].strip() != "":
 	     records[np.where(records == row[0])[0][0]][1] = row[11].strip()
-             falink = 'https://flightaware.com/live/modes/' + row[0].lower() + '/ident/' + row[11].strip() + '/redirect'
+	     #if linkservice == 'fa':
+	     falink = 'https://flightaware.com/live/modes/' + row[0].lower() + '/ident/' + row[11].strip() + '/redirect'
+	     #else:
+	     # format example: https://tar1090.adsbexchange.com/?icao=a07361&lat=42.356&lon=-71.109&zoom=11.0&showTrace=2020-06-05
+	     # falink = 'https://tar1090.adsbexchangecom/?icao='  + row[0].lower() + '&lat=' + lat + '&lon=' + lon + '&zoom=11.0&showTrace=' + row[5][0:4] + '-' + row[5][5:7] + '-' + row[5][8:10]
+
              records[np.where(records == row[0])[0][0]][6] = falink.strip()
 	  # replace "LastHeard" by the time in this row:
           records[np.where(records == row[0])[0][0]][3] = row[4] + ' ' + row[5][:8]
@@ -134,7 +146,12 @@ def main(argv):
               print counter, row[0], row[11].strip(), "(", rowdist, "<=", dist, ", alt=", rowalt, "): new"
 	      counter = counter + 1
            # records=np.vstack([records, np.array([row[0],row[11].strip(), row[4] + ' ' + row[5][:8], row[4] + ' ' + row[5][:8],row[1],"{:.1f}".format(rowdist),'https://flightaware.com/live/flight/' + row[11].strip() + '/history' if row[11].strip()<>"" else ''])])    
+	   # if linkservice == 'fa':
 	   falink = 'https://flightaware.com/live/modes/' + row[0].lower() + '/ident/' + row[11].strip() + '/redirect'
+	   #else:
+	   # format example: https://tar1090.adsbexchange.com/?icao=a07361&lat=42.356&lon=-71.109&zoom=11.0&showTrace=2020-06-05
+	   # falink = 'https://tar1090.adsbexchangecom/?icao='  + row[0].lower() + '&lat=' + lat + '&lon=' + lon + '&zoom=11.0&showTrace=' + row[5][0:4] + '-' + row[5][5:7] + '-' + row[5][8:10]
+
            records=np.vstack([records, np.array([row[0],row[11].strip(), row[4] + ' ' + row[5][:8], row[4] + ' ' + row[5][:8],row[1],"{:.1f}".format(rowdist),falink.strip() if row[11].strip()<>"" else ''])])
 	   fltcounter = fltcounter + 1
 

@@ -25,69 +25,41 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see https://www.gnu.org/licenses/.
 # -----------------------------------------------------------------------------------
-# Feel free to make changes to the variables between these two lines. However, it is
-# STRONGLY RECOMMENDED to RTFM! See README.md for explanation of what these do.
-# These are the input and output directories and file names:
-	OUTFILEDIR=/usr/share/dump1090-fa/html/planefence # the web directory you want PlaneFence to write to
-	PLANEFENCEDIR=/usr/share/planefence # the directory where this file and planefence.py are located
-	MAXALT=5000 # only planes below this altitude are reported. Must correspond to your socket30003 altitude unit
-	DIST=2.5 # only planes closer than this distance are reported. If CALCDIST (below) is set to "--calcdist", then the distance is in statute miles
-#		   if CALCDIST="", then the unit is whatever you used in your socket30003 setup
-	LAT=42.39663 # Latitude of the center point of the map. *** SEE BELOW
-	LON=-71.17726 # Longitude of the center point of the map. *** SEE BELOW
-	HISTTIME=7 # number of days shown in the history section of the website
-#	CALCDIST="" # if this variable is set to "", then planefence.py will use the reported distance from your station instead of recalculating it
-	CALCDIST="--calcdist" # if this variable is set to "--calcdist", then planefence.py will calculate the distance relative to LAT and LON as defined above
-	MY="KX1T's" # text for the header of the website
-	MYURL=".." # link for $MY in tge website's header
-	PLANETWEET="PlaneBoston" # Twitter handle for PlaneTweet. Comment this out if PlaneTweet is not available or disabled
-	RED="LightCoral" # background cell color for Loudness
-	YELLOW="Gold" # background cell color for Loudness
-	GREEN="YellowGreen" # background cell color for Loudness
-	GREENLIMIT=9 # Max. Loudness level to be shown green
-	YELLOWLIMIT=16 # Max. Loudness level to be shown yelloe
 #
-# *** SPECIAL CONSIDERATION OF LON and LAT
-# Only if CALCDIST="--calcdist", PlaneFence will recalculate every entry to see if it is within DIST of the defined LON/LAT.
-# If you set CALCDIST to "", then it will use the reported distance as configured in socket30003.cfg (see the documentation of that package).
-# Recalculating the distances is a bit more processor-intensive than using the reported values, so ONLY set CALCDIST="--calcdist" if
-# you want the center-point of PlaneFence to be somewhere that is not your station's exact LAT/LON.
-# Note that the link in the HTML page headings always uses the LAT/LON as defined above. You can use that to obfuscate your exact location.
+# The variables and program parameters have been moved to 'planefence.conf'. Please
+# make changes there.
 # -----------------------------------------------------------------------------------
 # Only change the variables below if you know what you are doing.
-	if [ "$1" != "" ] && [ "$1" != "reset" ]
-	then # $1 contains the date for which we want to run PlaneFence
-		FENCEDATE=$(date --date="$1" '+%y%m%d')
-	else
-		FENCEDATE=$(date --date="today" '+%y%m%d')
-	fi
 
-	TMPDIR=/tmp
-	LOGFILEBASE=$TMPDIR/dump1090-127_0_0_1-
-	OUTFILEBASE=$OUTFILEDIR/planefence
-	OUTFILEHTML=$OUTFILEBASE-$FENCEDATE.html
-	OUTFILECSV=$OUTFILEBASE-$FENCEDATE.csv
-	OUTFILETMP=$TMPDIR/dump1090-pf-temp.csv
-	INFILETMP=$TMPDIR/dump1090-pf.txt
-	TMPLINES=$TMPDIR/dump1090-pf-temp-$FENCEDATE.tmp
-	VERBOSE="--verbose"
-#	VERBOSE=""
-	HISTORY=history.html
-	HISTFILE=$OUTFILEDIR/$HISTORY
-	VERSION=3.0
-	LOGFILE=/tmp/planefence.log
-#	LOGFILE=logger # if $LOGFILE is set to "logger", then the logs are written to /var/log/syslog. This is good for debugging purposes.
-	CURRENT_PID=$$
-	PROCESS_NAME=$(basename $0)
-	systemctl is-active --quiet noisecapt && NOISECAPT=1 || NOISECAPT=0
+# FENCEDATE will be the date [yymmdd] that we want to process PlaneFence for.
+# The default value is 'today'.
+
+if [ "$1" != "" ] && [ "$1" != "reset" ]
+then # $1 contains the date for which we want to run PlaneFence
+	FENCEDATE=$(date --date="$1" '+%y%m%d')
+else
+	FENCEDATE=$(date --date="today" '+%y%m%d')
+fi
+
+CURRENT_PID=$$
+PROCESS_NAME=$(basename $0)
+systemctl is-active --quiet noisecapt && NOISECAPT=1 || NOISECAPT=0
 # -----------------------------------------------------------------------------------
 #
-# Let's see if there is a CONF file that overwrites some of the parameters already defined
-[ -f "$PLANEFENCEDIR/planefence.conf" ] && source "$PLANEFENCEDIR/planefence.conf"
+
+# Read the parameters from the config file
+if [ -f "$PLANEFENCEDIR/planefence.conf" ]
+then
+	source "$PLANEFENCEDIR/planefence.conf"
+else
+	echo $PLANEFENCEDIR/planefence.conf is missing. We need it to run PlaneFence! Go back to GitHub and get it from there!
+	exit 2
+fi
+
 #
 # Functions
 #
-# First create an function to write to the log
+# Function to write to the log
 LOG ()
 {
 	if [ -n "$1" ]
@@ -99,19 +71,11 @@ LOG ()
 
 	if [ "$VERBOSE" != "" ]
 	then
-		# set the color scheme in accordance to the log level urgency
-		if [ "$2" == "1" ]; then
-			COLOR="${blue}"
-		elif [ "$2" == "2" ]; then
-			COLOR="${red}"
-		else
-			COLOR=""
-		fi
 		if [ "$LOGFILE" == "logger" ]
 		then
-			printf "%s-%s[%s]v%s: %s%s${normal}\n" "$(date +"%Y%m%d-%H%M%S")" "$PROCESS_NAME" "$CURRENT_PID" "$VERSION" "$COLOR" "$IN" | logger
+			printf "%s-%s[%s]v%s: %s\n" "$(date +"%Y%m%d-%H%M%S")" "$PROCESS_NAME" "$CURRENT_PID" "$VERSION" "$IN" | logger
 		else
-			printf "%s-%s[%s]v%s: %s%s${normal}\n" "$(date +"%Y%m%d-%H%M%S")" "$PROCESS_NAME" "$CURRENT_PID" "$VERSION" "$COLOR" "$IN" >> $LOGFILE
+			printf "%s-%s[%s]v%s: %s\n" "$(date +"%Y%m%d-%H%M%S")" "$PROCESS_NAME" "$CURRENT_PID" "$VERSION" "$IN" >> $LOGFILE
 		fi
 	fi
 }
@@ -229,7 +193,7 @@ EOF
 					if  [ "${NEWVALUES[12]}" != "" ]
 					then
 						# there's tweet info in this field
-						printf "<td><a href=\"http://twitter.com/%s/status/%s\" target=\"_new\">yes</a></td>\n" "$PLANETWEET" "$(echo ${NEWVALUES[12]} | tr -c -d '[:alnum:]')" >> "$2"
+						printf "<td><a href=\"%s\" target=\"_new\">yes</a></td>\n" "$(echo ${NEWVALUES[12]} | tr -d '[:cntrl:]')" >> "$2"
 					else
 						printf "<td>yes</td>\n" >> "$2"
 					fi
@@ -242,7 +206,8 @@ EOF
                                         if  [ "${NEWVALUES[7]}" != "" ]
                                         then
                                                 # there's tweet info in this field
-                                                printf "<td><a href=\"http://twitter.com/%s/status/%s\" target=\"_new\">yes</a></td>\n" "$PLANETWEET" "$(echo ${NEWVALUES[7]} | tr -c -d '[:alnum:]')" >> "$2"
+						printf "<td><a href=\"%s\" target=\"_new\">yes</a></td>\n" "$(echo ${NEWVALUES[7]} | tr -d '[:cntrl:]')" >> "$2"
+
                                         else
                                                 printf "<td>yes</td>\n" >> "$2"
                                         fi
@@ -278,8 +243,10 @@ WRITEHTMLHISTORY () {
         fi
 
 	cat <<EOF >>"$2"
-		<div class="history">
-		<h4>Historical data</h4>
+	<section style="border: none; margin: 0; padding: 0; font: 12px/1.4 'Helvetica Neue', Arial, sans-serif;">
+		<article>
+		   <details open>
+			<summary style="font-weight: 900; font: 14px/1.4 'Helvetica Neue', Arial, sans-serif;">Historical Data</summary>
 		<p>Today: <a href="index.html" target="_top">html</a> - <a href="planefence-$FENCEDATE.csv" target="_top">csv</a>
 EOF
 
@@ -287,7 +254,7 @@ EOF
 	# right below. Right now, it lists all files that have the planefence-20*.html format (planefence-200504.html, etc.), and then
 	# picks the newest 7 (or whatever HISTTIME is set to), reverses the strings to capture the characters 6-11 from the right, which contain the date (200504)
 	# and reverses the results back so we get only a list of dates in the format yymmdd.
-	for d in $(ls -1 "$1"/planefence-*[!e].html | tail --lines=$((HISTTIME+1)) | head --lines=$HISTTIME | rev | cut -c6-11 | rev | sort -r)
+	for d in $(ls -1 "$1"/planefence-??????.html | tail --lines=$((HISTTIME+1)) | head --lines=$HISTTIME | rev | cut -c6-11 | rev | sort -r)
 	do
 	       	printf " | %s" "$(date -d "$d" +%d-%b-%Y): " >> "$2"
 		printf "<a href=\"%s\" target=\"_top\">html</a> - " "planefence-$(date -d "$d" +"%y%m%d").html" >> "$2"
@@ -295,7 +262,7 @@ EOF
 	done
 	printf "</p>\n" >> "$2"
 	printf "<p>Additional dates may be available by browsing to planefence-yymmdd.html in this directory.</p>" >> "$2"
-	printf "</div>\n" >> "$2"
+	printf "</details>\n</article>\n</section>" >> "$2"
 
 	# and print the footer:
         if [ "$3" == "standalone" ]
@@ -347,7 +314,9 @@ LOG "Current run starts at line $READLINES of $CURRCOUNT"
 tail --lines=+$READLINES $LOGFILEBASE"$FENCEDATE".txt > $INFILETMP
 
 # First, run planefence.py to create the CSV file:
+LOG "Invoking planefence.py..."
 $PLANEFENCEDIR/planefence.py --logfile=$INFILETMP --outfile=$OUTFILETMP --maxalt=$MAXALT --dist=$DIST --lat=$LAT --lon=$LON $VERBOSE $CALCDIST 2>&1 | LOG
+LOG "Returned from planefence.py..."
 
 # Now we need to combine any double entries. This happens when a plane was in range during two consecutive Planefence runs
 # A real simple solution could have been to use the Linux 'uniq' command, but that won't allow us to easily combine them
@@ -461,6 +430,14 @@ else
 	LOG "Info: PlaneTweet not enabled"
 fi
 
+# And see if we need to run PLANEHEAT
+if [ -f "$PLANEHEATSCRIPT" ] && [ -f "$OUTFILECSV" ]
+then
+	LOG "Invoking PlaneHeat!"
+	$PLANEHEATSCRIPT
+	LOG "Returned from PlaneHeat"
+fi
+
 # We also need an updated history file that can be loaded into an IFRAME:
 # print HTML headers first, and a link to the "latest":
 
@@ -501,13 +478,24 @@ cat <<EOF >"$OUTFILEHTML"
 -->
 <head>
     <title>ADS-B 1090 MHz PlaneFence</title>
+EOF
+
+if [ -f "$PLANEHEATHTML" ]
+then
+     cat <<EOF >>"$OUTFILEHTML"
+     <link rel="stylesheet" href="leaflet.css" />
+     <script src="leaflet.js"></script>
+EOF
+fi
+
+cat <<EOF >>"$OUTFILEHTML"
     <style>
         body { font: 12px/1.4 "Helvetica Neue", Arial, sans-serif; }
         a { color: #0077ff; }
 	h1 {text-align: center}
 	h2 {text-align: center}
 	.planetable { border: 1; margin: 0; padding: 0; font: 12px/1.4 "Helvetica Neue", Arial, sans-serif; text-align: center }
-	.history { border: none; margin: 0; padding: 0; font: 10px/1.4 "Helvetica Neue", Arial, sans-serif; }
+	.history { border: none; margin: 0; padding: 0; font: 12px/1.4 "Helvetica Neue", Arial, sans-serif; }
 	.footer{ border: none; margin: 0; padding: 0; font: 8px/1.4 "Helvetica Neue", Arial, sans-serif; text-align: center }
     </style>
 </head>
@@ -517,24 +505,37 @@ cat <<EOF >"$OUTFILEHTML"
 <h2>Show aircraft in range of <a href="$MYURL" target="_top">$MY</a> ADS-B PiAware station for a specific day</h2>
 <ul>
    <li>Last update: $(date +"%b %d, %Y %R:%S %Z")
-   <li>Maximum distance from <a href="https://www.openstreetmap.org/?mlat=$LAT&mlon=$LON#map=14/$LAT/$LON&layers=H" target=_blank>$LAT $LON</a>: $DIST miles
+   <li>Maximum distance from <a href="https://www.openstreetmap.org/?mlat=$LAT&mlon=$LON#map=14/$LAT/$LON&layers=H" target=_blank>${LAT}&deg;N, ${LON}&deg;E</a>: $DIST miles
    <li>Only aircraft below $(printf "%'.0d" $MAXALT) ft are reported.
    <li>Data extracted from $(printf "%'.0d" $CURRCOUNT) <a href="https://en.wikipedia.org/wiki/Automatic_dependent_surveillance_%E2%80%93_broadcast" target="_blank">ADS-B messages</a> received since midnight today.
+   <li>Click on the flight number to see the full flight information/history
 EOF
 
+[ "$PLANETWEET" != "" ] && printf "<li>Click on the word &quot;yes&quot; in the <b>Tweeted</b> column to see the Tweet.\n<li>Note that tweets are issued after a slight delay\n" >> "$OUTFILEHTML"
 [ "$PLANETWEET" != "" ] && printf "<li>Get notified instantaneously of planes in range by following <a href=\"http://twitter.com/%s\" target=\"_blank\">@%s</a> on Twitter!" "$PLANETWEET" "$PLANETWEET" >> "$OUTFILEHTML"
 
 printf "</ul>" >> "$OUTFILEHTML"
 
 WRITEHTMLTABLE "$OUTFILECSV" "$OUTFILEHTML"
-WRITEHTMLHISTORY "$OUTFILEDIR" "$OUTFILEHTML"
+
+cat <<EOF >>"$OUTFILEHTML"
+        <section style="border: none; margin: 0; padding: 0; font: 12px/1.4 'Helvetica Neue', Arial, sans-serif;">
+                <article>
+                   <details>
+                        <summary style="font-weight: 900; font: 14px/1.4 'Helvetica Neue', Arial, sans-serif;">Click on the triangle next to the header to show/collapse the section </summary>
+		   </details>
+		</article>
+	</section>
+EOF
 
 # Write some extra text if NOISE data is present
 if (( MAXFIELDS > 7 ))
 then
 	cat <<EOF >>"$OUTFILEHTML"
-	<div style="border: none; margin: 0; padding: 0; font: 10px/1.4 'Helvetica Neue', Arial, sans-serif;">
-	<h4>Notes on sound level data:</h4>
+	<section style="border: none; margin: 0; padding: 0; font: 12px/1.4 'Helvetica Neue', Arial, sans-serif;">
+		<article>
+		   <details>
+			<summary style="font-weight: 900; font: 14px/1.4 'Helvetica Neue', Arial, sans-serif;">Notes on sound level data</summary>
 	<ul>
 	   <li>This data is for informational purposes only and is of indicative value only. It was collected using a non-calibrated device under uncontrolled circumstances.
 	   <li>The data unit is &quot;dBFS&quot; (Decibels-Full Scale). 0 dBFS is the loudest sound the device can capture. Lower values, like -99 dBFS, mean very low noise. Higher values, like -10 dBFS, are very loud.
@@ -543,11 +544,33 @@ then
 	   <li>Loudness values of greater than $YELLOWLIMIT dB are in red. Values greater than $GREENLIMIT dB are in yellow.
 	   <li>'Peak RMS Sound' is the highest measured 5-seconds RMS value during the time the aircraft was in the coverage area.
 	   <li>The subsequent values are 1, 5, 10, and 60 minutes averages of these 5 second RMS measurements for the period leading up to the moment the aircraft left the coverage area.
-	   <li>One last, but important note: The reported sound levels are general outdoor ambient noise in an exurban environment. The system doesn't just capture airplane noise, but also trucks on a nearby highway, lawnmowers, children playing, people working on their projects, air conditioner noise, etc.
+	   <li>One last, but important note: The reported sound levels are general outdoor ambient noise in a suburban environment. The system doesn't just capture airplane noise, but also trucks on a nearby highway, lawnmowers, children playing, people working on their projects, air conditioner noise, etc.
 	<ul>
-	</div>
+		   </details>
+		</article>
+	</section>
 EOF
 fi
+
+# if $PLANEHEATHTML exists, then add the heatmap
+if [ -f "$PLANEHEATHTML" ]
+then
+	cat <<EOF >>"$OUTFILEHTML"
+	<section style="border: none; margin: 0; padding: 0; font: 12px/1.4 'Helvetica Neue', Arial, sans-serif;">
+		<article>
+		   <details open>
+			<summary style="font-weight: 900; font: 14px/1.4 'Helvetica Neue', Arial, sans-serif;">Heatmap</summary>
+EOF
+	cat "$PLANEHEATHTML" >>"$OUTFILEHTML"
+	cat <<EOF >>"$OUTFILEHTML"
+		   </details>
+		</article>
+	</section>
+EOF
+fi
+
+WRITEHTMLHISTORY "$OUTFILEDIR" "$OUTFILEHTML"
+LOG "Done writing history"
 
 cat <<EOF >>"$OUTFILEHTML"
 <div class="footer">
