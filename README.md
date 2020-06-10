@@ -2,14 +2,15 @@
 Collection of scripts using Socket30003 logs to create a list of aircraft that fly low over your location.
 Copyright 2020 by Ramon F. Kolb - Licensed under GPL3.0 - see separate license file.
 
-For an example, see http://ramonk.net/planefence
+For an example, see http://planefence.ramonk.net
 
-This documentation is for PlaneFence v3.0. For a summary of changes since v1, see at the end of this document. (There was no publicly released PlaneFence v2.)
+This documentation is for PlaneFence v3.11. For a summary of changes since v1, see at the end of this document. (There was no publicly released PlaneFence v2.)
 
 ## Attributions, inclusions, and prerequisites
 
 1. You must have a Raspberry Pi with a working version of dump1090, dump1090-fa, dump1090-mutability, or the equivalent dump978 versions installed. If you don't have this, stop right here. It makes no sense to continue unless you understand the basic functions of the ADSB receiver for Raspberry Pi
 2. The scripts in this repository rely on [dump1090.socket30003](https://github.com/tedsluis/dump1090.socket30003), used and distributed under the GPLv3.0 license. 
+3. The instructions below err on the side of completeness. It may look a bit overwhelming, but if you follow each step to the letter, you should be able to set this up in 30 minutes or less.
 
 What does this mean for you? Follow the installation instructions and you should be good :)
 
@@ -42,10 +43,10 @@ git clone https://github.com/kx1t/planefence.git
 cd planefence
 ```
 
-Note -- currently, PlaneFence v3.0 is on a separate branch. In order to make sure you are installing the software from this branch, please issue the following commands:
+Note -- currently, PlaneFence v3.0 is on a separate branch called `dev`. In order to make sure you are installing the software from this branch, please issue the following commands:
 ```
 git fetch --all
-git checkout planefence-v3
+git checkout dev
 ```
 ### Make a planefence directory in your existing HTML directory
 Under normal circumstances, your FlightAware or dump1090 maps are rendered in this directory:
@@ -65,6 +66,7 @@ Let's make a target directory and move PlaneFence to there:
 sudo mkdir /usr/share/planefence
 sudo chmod a+rwx /usr/share/planefence
 cp scripts/* /usr/share/planefence
+cp jscript/* /usr/share/dump1090-fa/html/planefence 
 chmod a+x /usr/share/planefence/*.sh /usr/share/planefence/*.py start_planefence
 ```
 
@@ -87,7 +89,7 @@ Planefence.sh is the work horse of this project. It makes sure that everything i
 nano /usr/share/planefence/planefence.conf
 ```
 
-- Read the instruction/commentary. You should consider changing at least the following:
+- Read the instruction/commentary. Each parameter is described in this file. You should consider reviewing at least the following:
 - `OUTFILEDIR` contains your *planefence directory* name. If you have a different name, change it there
 - `PLANEFENCEDIR` contains the directory name where `planefence.py` is located. If you followed the instructions above, you won't need to change this.
 - `MAXALT` contains the altitude ceiling in ft. `MAXALT=5000` means that only planes that are 5000 ft or lower are tracked
@@ -128,23 +130,23 @@ Example: `/usr/share/planefence/catchup.sh 1`
 The optional `days` argument indicates how many days of history the script will generate, with "1" being today, and "8" being today + the previous 7 days. The script will skip those days for which there is no data available.
 
 # Seeing your PlaneFence page
-Once you have rendered at least 1 PlaneFence, you can find it at `http://<address_of_rpi>/planefence`.
+Once you have run the app at least once, you can find it at `http://<address_of_rpi>/planefence`.
 Replace `<address_of_rpi>` with whatever the address is you normally use to get to the SkyAware or Dump1090 map.
-For reference, see (http://ramonk.net/planefence).
+For reference, see (http://planefence.ramonk.net).
 
 # Optional - Tweeting Your Updates
 Once you have PlaneFence completely up and running, you can add an option to send a Tweet for every overflying plane.
 The setup of this is a bit complicated as you will have to register your own Twitter Developer Account, and get a 
 App Key for your application.
-Luckily, I wrote detailed installation instructions that can be accessed here:
+Detailed installation instructions can be accessed here:
 https://github.com/kx1t/planefence/blob/master/README-twitter.md
 
 If you want to see an example of how this works, go here: https://twitter.com/PlaneBoston
 
 # Known Issues
-- There is some irregularity if a plane stays in range during 2 consecutive runs. Investigating
 - Planes that are seen multiple times during consecutive runs, may show up multiple times
 - The script hasn't been thoroughly tested. Please provide feedback and exerpts of /tmp/planefence.log that show the activites around the time the issues occurred.
+- The code is a bit messy and at times, disorganized. However, it's overly documented and should be easy to understand and adapt.
 
 # Summary of License Terms
 This program is free software: you can redistribute it and/or modify
