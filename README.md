@@ -97,12 +97,12 @@ nano /usr/share/planefence/planefence.conf
 - `LAT` and `LON` should be set to your approximate Latitude and Longitude. 
 
 ## start_planefence
-This script is a wrapped for the PlaneFence Systemd Service (see below).
-It invokes PlaneFence every approx. 2 minutes. I highly suggest not to change this, but if you must, then you can do so as follows:
+This script is a wrapper for the PlaneFence Systemd Service (see below).
+It invokes PlaneFence every ~80 seconds. I highly suggest not to change this, but if you must, then you can do so as follows:
 ```
 nano /usr/share/planefence/start_planefence
 ```
-The only parameter you could change here, is `LOOPTIME`, which contains the time between two runs of PlaneFence. I strongly suggest to make this no shorter than 60 seconds, to avoid overloading your system.
+The only parameter you could change here, is `LOOPTIME`, which contains the time between two runs of PlaneFence. To avoid overloading your system, I strongly suggest to make this no shorter than 60 seconds.
 
 ### Install the PlaneFence Systemd Service
 PlaneFence uses SystemD to run as a daemon. Daemons are programs that run in the background without user interaction.
