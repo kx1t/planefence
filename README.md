@@ -24,6 +24,9 @@ Follow the following steps in order.
 3. You should have GIT installed on your Raspberry Pi. If you don't, you can add it by typing the following on the command line: `sudo apt install git` 
 4. You should know how to use your Raspberry Pi's default text editor called `nano`. Most importantly, you should remember that you can save your edits with `CTRL-o` and exit from the editor with `CTRL-x`.
 
+### Note - don't install as user `root`
+I strongly recommend to install both `Dump1090.Socket30003` and `PlaneFence` as user `pi` on your Raspberry Pi, and NOT as user `root`. Reasons for this include general system security, but also - once you run PlaneFence as `root`, it will create files that cannot be read or overwritten by any other user, and this stops your ability to run `PlaneFence` as user `pi` in the future.
+
 ### Install Dump1090.Socket30003
 `Dump1090.Socket30003` collects and stores data about all aircraft within reach in CSV files. We will use these CSV files to extract data about aircraft that fly over our location. Here's how.
 
