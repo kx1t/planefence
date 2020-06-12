@@ -31,6 +31,10 @@
 # -----------------------------------------------------------------------------------
 # Only change the variables below if you know what you are doing.
 
+# We need to define the directory where the config file is located:
+
+PLANEFENCEDIR=/usr/share/planefence
+
 # FENCEDATE will be the date [yymmdd] that we want to process PlaneFence for.
 # The default value is 'today'.
 
