@@ -167,3 +167,4 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 - v3.0: total rewrite of planefence.sh and major simplification of planefence.py
 - v3.0: only iterates through the socket30003 log lines that weren't processed previously. Reduced execution time dramatically, from ~1 minute for 1M lines, to an average of ~5 seconds between two runs that are 2 minutes apart.
 - v3.0: uses Systemd to run planefence as a daemon; removed need for cronjob.
+- v3.11: clean-up, minor fixes, updated documentation, etc.
