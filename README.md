@@ -36,7 +36,7 @@ Make sure to check that your lat/long has been correctly set to your approximate
 If you want to use PlaneFence as-is, then the instructions below will assume that you DON'T change the location or format of the log files. This means, that they are written as `/tmp/dump1090_127_0_0_1-yymmdd.txt` and `....log`.
 
 ### Install the scripts from this repository
-Clone the repository. Log into you Raspberry Pi and give the following commands:
+Clone the repository. Log into you Raspberry Pi as user `pi`and give the following commands:
 
 ```
 cd
