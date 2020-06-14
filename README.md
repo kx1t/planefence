@@ -24,16 +24,21 @@ Follow the following steps in order.
 3. You should have GIT installed on your Raspberry Pi. If you don't, you can add it by typing the following on the command line: `sudo apt install git` 
 4. You should know how to use your Raspberry Pi's default text editor called `nano`. Most importantly, you should remember that you can save your edits with `CTRL-o` and exit from the editor with `CTRL-x`.
 
+### Note - don't install as user `root`
+When you follow the instructions below, I strongly recommend to install all software and scripts as user `pi` and NOT as user `root`. Reasons for this include general system security, but also - once you run PlaneFence as `root`, it will create files that cannot be read or overwritten by any other user, and this stops your ability to run `PlaneFence` as user `pi` in the future.
+So, please stick with user `pi`.
+
 ### Install Dump1090.Socket30003
 `Dump1090.Socket30003` collects and stores data about all aircraft within reach in CSV files. We will use these CSV files to extract data about aircraft that fly over our location. Here's how.
 
 To install `Dump1090.Socket30003`, [go here](https://github.com/tedsluis/dump1090.socket30003) and follow the installation instructions from the start **UP TO INCLUDING** the section about adding a [Cron Job](https://github.com/tedsluis/dump1090.socket30003#add-socket30003pl-as-a-crontab-job).
+
 Make sure to check that your lat/long has been correctly set to your approximate location in the `[common]` section of `socket30003.cfg`. If they aren't, your PlaneFence won't work.
 
 If you want to use PlaneFence as-is, then the instructions below will assume that you DON'T change the location or format of the log files. This means, that they are written as `/tmp/dump1090_127_0_0_1-yymmdd.txt` and `....log`.
 
 ### Install the scripts from this repository
-Clone the repository. Log into you Raspberry Pi and give the following commands:
+Clone the repository. Log into you Raspberry Pi as user `pi`and give the following commands:
 
 ```
 cd
@@ -92,12 +97,12 @@ nano /usr/share/planefence/planefence.conf
 - `LAT` and `LON` should be set to your approximate Latitude and Longitude. 
 
 ## start_planefence
-This script is a wrapped for the PlaneFence Systemd Service (see below).
-It invokes PlaneFence every approx. 2 minutes. I highly suggest not to change this, but if you must, then you can do so as follows:
+This script is a wrapper for the PlaneFence Systemd Service (see below).
+It invokes PlaneFence every ~80 seconds. I highly suggest not to change this, but if you must, then you can do so as follows:
 ```
 nano /usr/share/planefence/start_planefence
 ```
-The only parameter you could change here, is `LOOPTIME`, which contains the time between two runs of PlaneFence. I strongly suggest to make this no shorter than 60 seconds, to avoid overloading your system.
+The only parameter you could change here, is `LOOPTIME`, which contains the time between two runs of PlaneFence. To avoid overloading your system, I strongly suggest to make this no shorter than 60 seconds.
 
 ### Install the PlaneFence Systemd Service
 PlaneFence uses SystemD to run as a daemon. Daemons are programs that run in the background without user interaction.
@@ -164,3 +169,4 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 - v3.0: total rewrite of planefence.sh and major simplification of planefence.py
 - v3.0: only iterates through the socket30003 log lines that weren't processed previously. Reduced execution time dramatically, from ~1 minute for 1M lines, to an average of ~5 seconds between two runs that are 2 minutes apart.
 - v3.0: uses Systemd to run planefence as a daemon; removed need for cronjob.
+- v3.11: clean-up, minor fixes, updated documentation, etc.
