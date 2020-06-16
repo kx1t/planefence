@@ -120,8 +120,14 @@ echo "Done installing the dependencies. Let's get PlaneFence!"
 # Now we are going to make the GIT directory and clone PlaneFence into it:
 [ ! -d "$HOME/git" ] && mkdir $HOME/git
 cd $HOME/git
-git clone https://github.com/kx1t/planefence.git
-cd planefence
+if [ ! -d "planefence" ]
+then
+	git clone https://github.com/kx1t/planefence.git
+	cd planefence
+else
+	cd planefence
+	git pull
+fi
 
 echo "Now installing PlaneFence..."
 # Now make some directories and ensure that the right owners and modes are set
