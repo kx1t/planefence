@@ -29,7 +29,7 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see https://www.gnu.org/licenses/.
 clear
-echo "Welcome to PlaneFence Setup"
+echo "Welcome to PlaneFence Setup - version200616-1754"
 echo "https://github.com/kx1t/planefence"
 echo "Copyright 2020 by Rodney Yeo"
 echo "Adaptations and changes Copyright 2020 by Ramón F. Kolb"
