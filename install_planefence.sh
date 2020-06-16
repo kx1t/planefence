@@ -4,7 +4,7 @@
 #
 # Usage: ./install_planefence.sh
 # Or from your BASH command line on your Raspberry Pi:
-# bash <(curl -Ls https://raw.githubusercontent.com/kx1t/planefence/master/install_planefence.sh)
+# bash -c "$(wget -q -O - https://raw.githubusercontent.com/kx1t/planefence/master/install_planefence.sh)"
 #
 # Developed/tested and Copyright 2020 Rodney Yeo. Adapted/changed by Ramon F. Kolb.
 #
@@ -103,6 +103,10 @@ fi
 echo "--------------------------------------------------------------------"
 echo "Now, we will install a number of dependencies. Some packages may already be installed"
 echo "so you can safely ignore any warning about this."
+echo ""
+echo "This will take while - initial installation may take 15 - 30 minutes."
+echo "Go get some coffee. Or tea. Or beer. Or pizza. Or, if you want to be boring, a drink of water!"
+echo ""
 read -p "Press enter to start."
 
 sudo apt update -y
