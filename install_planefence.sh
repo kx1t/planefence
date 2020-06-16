@@ -129,6 +129,9 @@ else
 	git pull
 fi
 
+echo ""
+echo "--------------------------------------------------------------------"
+echo ""
 echo "Now installing PlaneFence..."
 # Now make some directories and ensure that the right owners and modes are set
 [ ! -d "/usr/share/planefence" ] && sudo mkdir /usr/share/planefence
@@ -147,9 +150,9 @@ chmod a+x /usr/share/planefence/*.py
 chmod a+x /usr/share/planefence/*.pl
 chmod a+x /usr/share/planefence/start_*
 
+echo ""
 echo "--------------------------------------------------------------------"
 echo "The installation is now complete. Let's configure PlaneFence so you are ready to go!"
-echo ""
 echo ""
 a=""
 while [ "$a" != "y" ]
@@ -218,6 +221,7 @@ read -p "Press ENTER to continue or CTRL-C to abort..."
 
 echo ""
 echo "--------------------------------------------------------------------"
+echo ""
 echo "Writing configuration values..."
 
 # First escape all forward slashes in DUMPDIR and SOCKDIR:
@@ -239,6 +243,7 @@ sed -i 's/\(^\s*DIST=\).*/\1'"$DIST"'/' /usr/share/planefence/planeheat.sh
 
 echo ""
 echo "--------------------------------------------------------------------"
+echo ""
 echo "Starting PlaneFence service..."
 
 sudo systemctl daemon-reload
@@ -247,6 +252,7 @@ sudo systemctl start planefence
 
 echo ""
 echo "--------------------------------------------------------------------"
+echo ""
 echo "Done!"
 echo "You can find more settings in /usr/share/planefence/planefence.conf
 echo "Feel free to look at those and change them to your liking.
