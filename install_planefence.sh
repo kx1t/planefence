@@ -157,11 +157,11 @@ echo ""
 a=""
 while [ "$a" != "y" ]
 do
-	read -p "Enter Your Latitude, for example 42.39663: " latitude
-	echo "Your Station Latitute is $latitude"
+	read -p "Enter your latitude in decimal degrees N, for example 42.39663: " LATITUDE
+	echo "Your station latitute is $LATITUDE"
 	echo ""
-	read -p "Enter Your Longitude, for example -71.17726: " longitude
-	echo "Your Station Longitude is $longitude"
+	read -p "Enter your longitude in decimal degrees E, for example -71.17726: " LONGITUDE
+	echo "Your station longitude is $LONGITUDE"
 	echo ""
 	echo "Let's establish some range parameters."
 	echo "Please note that the default units are those that you set in socket30003."
@@ -211,10 +211,10 @@ echo ""
 echo "--------------------------------------------------------------------"
 echo ""
 echo "Configuration summary:"
-echo "Latitude: "$LATITUDE""
-echo "Longitude: "$LONGITUDE""
+echo "Latitude (N): "$LATITUDE""
+echo "Longitude (E): "$LONGITUDE""
 echo "Maximum in-range altitude: "$MAXALT""
-echo "DIST="$DIST""
+echo "Maximum in-range distance from $LATITUDE N / $LONGITUDE E: "$DIST""
 echo "Socket30003 directory: "$SOCKDIR""
 echo "Dump1090 directory: "$DUMPDIR""
 read -p "Press ENTER to continue or CTRL-C to abort..."
