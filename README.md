@@ -37,6 +37,19 @@ Make sure to check that your lat/long has been correctly set to your approximate
 
 If you want to use PlaneFence as-is, then the instructions below will assume that you DON'T change the location or format of the log files. This means, that they are written as `/tmp/dump1090_127_0_0_1-yymmdd.txt` and `....log`.
 
+### AUTO-INSTALL (UNTESTED/DO AT YOUR OWN RISK)
+We are in the process of drastically simplifying the installation experience. However - this has not yet been thoroughly tested.
+
+Instead of the manual installation described below, you can try our auto-install "alpha" by logging into your Raspberry Pi
+as user `pi`, and then copying / pasting the following line:
+
+```
+bash -c "$(wget -q -O - https://raw.githubusercontent.com/kx1t/planefence/master/install_planefence.sh)"
+```
+
+Again -- if you come across any errors, please let us know. You can resolve them by following the manual instructions below.
+If you are successful, you do NOT have to follow any of the instructions below!
+
 ### Install the scripts from this repository
 Clone the repository. Log into you Raspberry Pi as user `pi`and give the following commands:
 
