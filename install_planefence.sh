@@ -43,6 +43,7 @@ if [ "$USER" != "pi" ]
 then
 	echo "WARNING... You should really run this script as user \"pi\"."
 	echo "Instead, you are running it as user \""$USER"\"."
+	echo ""
 	read -p "Are you sure you want to continue? (y/N) " choice
 	[ "${choice:0:1}" != "y" ] && exit -1
 	echo "--------------------------------------------------------------------"
@@ -51,8 +52,11 @@ if [ "$USER" == "root" ]
 then
 	echo "Sorry to bother again. You should REALLY NOT run this script as user \"root\"."
 	echo "Did you invoke the script with \"sudo\"? Then please run it without \"sudo\"."
+	echo ""
 	echo "Installing the software as \"root\" will cause all kind of security issues later."
-	echo "We strongly recommend you answer \"NO\" below."
+	echo ""
+	echo "--> We strongly recommend you answer \"NO\" below. <--"
+	echo ""
 	read -p "Are you sure you want to continue? (y/N) " choice
 	[ "${choice:0:1}" != "y" ] && exit -1
 	echo "Ok then, you have been warned. Don't blame us..."
