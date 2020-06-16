@@ -131,8 +131,8 @@ fi
 
 echo "Now installing PlaneFence..."
 # Now make some directories and ensure that the right owners and modes are set
-sudo mkdir /usr/share/planefence
-sudo mkdir /usr/share/dump1090-fa/html/planefence
+[ ! -d "/usr/share/planefence" ] && sudo mkdir /usr/share/planefence
+[ ! -d "/usr/share/dump1090-fa/html/planefence" ] && sudo mkdir /usr/share/dump1090-fa/html/planefence
 sudo chown pi:pi /usr/share/planefence "$DUMPDIR"/html/planefence
 chmod u+rwx,go+rx-w /usr/share/planefence "$DUMPDIR"/html/planefence
 
