@@ -169,7 +169,8 @@ do
 	[ "$b" != "" ] && DIST="$b"
 	
 	MY="my"
-	echo ""What is the name you want to put in the webpage title? ["$MY"]: " b
+	echo ""
+	read -p "What is the name you want to put in the webpage title? ["$MY"]: " b
 	[ "$b" != "" ] && MY="$b"
 
 	echo ""
