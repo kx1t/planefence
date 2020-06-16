@@ -62,6 +62,7 @@ fi
 # Let's find out what the dump1090 directory is
 echo "Figuring out where your dump1090 directory is..."
 if [ -d "/usr/share/dump1090-fa" ] && [ -d "/usr/share/dump1090" ]
+then
 	echo "It appears that both \"/usr/share/dump1090-fa\" and \"/usr/share/dump1090\" exist on your system.
 	echo "Which one would you like to use for your PlaneFence installation?
 	echo "1) /usr/share/dump1090-fa"
