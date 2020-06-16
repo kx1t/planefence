@@ -68,7 +68,7 @@ then
 	echo "1) /usr/share/dump1090-fa"
 	echo "2) /usr/share/dump1090"
 	a=""
-	while [ "$a" == ""]
+	while [ "$a" == "" ]
 	do
 		read -p "Please enter 1 or 2, or enter a custom directory name: " a
 		[ "$a" == "1" ] && DUMPDIR="/usr/share/dump1090-fa"
