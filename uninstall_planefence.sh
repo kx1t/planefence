@@ -31,8 +31,7 @@
 clear
 echo "Welcome to PlaneFence Uninstall - version200617-1130"
 echo "https://github.com/kx1t/planefence"
-echo "Copyright 2020 by Rodney Yeo"
-echo "Adaptations and changes Copyright 2020 by Ramón F. Kolb"
+echo "Copyright 2020 by Ramón F. Kolb"
 echo ""
 echo "This script will attempt to uninstall PlaneFence."
 echo ""
@@ -49,7 +48,7 @@ echo ""
 
 PLANEFENCELOC="/usr/share/planefence/planefence.sh"
 # Find planefence.sh. We need this to read the location of the planefence.conf file
-if [ ! -d "$PLANEFENCELOC" ]
+if [ ! -f "$PLANEFENCELOC" ]
 then
   echo "Cannot find "$PLANEFENCELOC". Uninstall failed. No files were deleted."
   exit -1
