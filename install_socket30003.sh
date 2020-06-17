@@ -29,7 +29,7 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see https://www.gnu.org/licenses/.
 clear
-echo "Welcome to Socket30003 Setup - version 200617-1300"
+echo "Welcome to Socket30003 Setup - version 200617-1600"
 echo "https://github.com/kx1t/planefence"
 echo "Copyright 2020 by Ramón F. Kolb"
 echo ""
@@ -214,6 +214,14 @@ echo "--------------------------------------------------------------------"
 echo ""
 echo "Invoking socket30003.pl installation script..."
 
+# First create the install directory. This is needed because the install script attempts to do this as user=PI
+# When using the default /usr/share/socket30003 target, this will fail because of permissions.
+# So we need to pre-empt this:
+
+[ ! -d "$INSTALLDIRECTORY" ] && sudo mkdir "$INSTALLDIRECTORY"
+sudo chown pi:pi "$INSTALLDIRECTORY"
+chmod u+rwx,go+rx-w "$INSTALLDIRECTORY"
+
 ./install.pl -install "$INSTALLDIRECTORY"
 
 echo ""
@@ -222,9 +230,9 @@ echo ""
 echo "Writing crontab..."
 
 #write out current crontab
-crontab -l > /tmp/mycron
+crontab -l > /tmp/mycron 2>/dev/null
 #echo new cron into cron file
-echo "*/5 * * * * sudo $INSTALLDIRECTORY/socket30003.pl >> /tmp/mycron
+echo "*/5 * * * * sudo $INSTALLDIRECTORY/socket30003.pl" >> /tmp/mycron
 #install new cron file
 crontab /tmp/mycron
 rm /tmp/mycron
