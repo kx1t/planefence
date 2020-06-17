@@ -192,7 +192,13 @@ do
 done
 
 echo ""
-if [ -d "$HOME/socket30003" ]
+if [ -d "$/usr/share/sock30003" ]
+then
+	SOCKDIR="/usr/share/socket30003"
+	echo "We found the home directory of Socket30003 as "$SOCKDIR"."
+	read -p "Press ENTER to use this, or type a custom directory name: " a
+	[ "$a" != "" ] && SOCKDIR="$a"
+elif [ -d "$HOME/socket30003" ]
 then
 	SOCKDIR="$HOME/socket30003"
 	echo "We found the home directory of Socket30003 as "$SOCKDIR"."
