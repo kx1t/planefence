@@ -6,7 +6,7 @@
 # Or from your BASH command line on your Raspberry Pi:
 # bash -c "$(wget -q -O - https://raw.githubusercontent.com/kx1t/planefence/master/install_planefence.sh)"
 #
-# Developed/tested and Copyright 2020 Rodney Yeo. Adapted/changed by Ramon F. Kolb.
+# Copyright 2020 by Ramón F. Kolb, with collaborations by Rodney Yeo
 #
 # This software may be used under the terms and conditions of the GPLv3 license. 
 # The terms and conditions of this license are included with the Github
@@ -31,8 +31,7 @@
 clear
 echo "Welcome to PlaneFence Setup - version200616-1817"
 echo "https://github.com/kx1t/planefence"
-echo "Copyright 2020 by Rodney Yeo"
-echo "Adaptations and changes Copyright 2020 by Ramón F. Kolb"
+echo "Copyright 2020 by Ramón F. Kolb, with collaborations by Rodney Yeo"
 echo ""
 echo "This script will attempt to install and configure PlaneFence."
 echo ""
