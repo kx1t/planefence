@@ -28,21 +28,15 @@ Follow the following steps in order.
 When you follow the instructions below, I strongly recommend to install all software and scripts as user `pi` and NOT as user `root`. Reasons for this include general system security, but also - once you run PlaneFence as `root`, it will create files that cannot be read or overwritten by any other user, and this stops your ability to run `PlaneFence` as user `pi` in the future.
 So, please stick with user `pi`.
 
-### Install Dump1090.Socket30003
-`Dump1090.Socket30003` collects and stores data about all aircraft within reach in CSV files. We will use these CSV files to extract data about aircraft that fly over our location. Here's how.
-
-To install `Dump1090.Socket30003`, [go here](https://github.com/tedsluis/dump1090.socket30003) and follow the installation instructions from the start **UP TO INCLUDING** the section about adding a [Cron Job](https://github.com/tedsluis/dump1090.socket30003#add-socket30003pl-as-a-crontab-job).
-
-Make sure to check that your lat/long has been correctly set to your approximate location in the `[common]` section of `socket30003.cfg`. If they aren't, your PlaneFence won't work.
-
-If you want to use PlaneFence as-is, then the instructions below will assume that you DON'T change the location or format of the log files. This means, that they are written as `/tmp/dump1090_127_0_0_1-yymmdd.txt` and `....log`.
 
 ### AUTO-INSTALL (UNTESTED/DO AT YOUR OWN RISK)
-Once you finish installing and configuring `socket30003`, you can automatically install and configure PlaneFence by logging into your Raspberry Pi as user `pi`, and then copying / pasting the following line:
+You can automatically install and configure PlaneFence by logging into your Raspberry Pi as user `pi`, and then copying / pasting the following line:
 
 ```
 bash -c "$(wget -q -O - https://raw.githubusercontent.com/kx1t/planefence/master/install_planefence.sh)"
 ```
+
+Note -- if `dump1090.socket30003` isn't already installed in one of the most common locations, this install script will also attempt to install that file
 
 Again -- if you come across any errors, please let us know. You can resolve them by following the manual instructions described in README-manual-install.md
 
