@@ -213,8 +213,8 @@ else
 	echo "We cannot find any socket30003 installation."
 	echo "Are you sure Socket30003 is correctly installed?"
 	echo "If you are sure and know the directory name, type it here."
-	read -p "Otherwise, please press ENTER to exit the installation script: " a
-	[ "$a" != "" ] && SOCKDIR="$a" || exit -1
+	read -p "Otherwise, please press ENTER to INSTALL Socket30003: " a
+	[ "$a" != "" ] && SOCKDIR="$a" || bash -c "$(wget -q -O - https://raw.githubusercontent.com/kx1t/planefence/master/install_socket30003.sh)" install_socket30003.sh $LATITUDE $LONGITUDE
 fi
 echo ""
 echo "--------------------------------------------------------------------"
