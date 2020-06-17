@@ -21,10 +21,10 @@ Follow the following steps in order.
 ### Prerequisites
 1. These instructions assume that you already have a relatively standard installation of dump1090, dump1090-fa, dump1090-mutability, or the equivalent dump978 on your Raspberry Pi. If you don't have this, Google "FlightAware feeder", "Radarbox24 feeder", or something similar to get started. Get a RPi 3B+ or 4, an RTL-SDR dongle, an antenna, and come back here when you can access a map with aircraft flying over your home.
 2. You should feel somewhat comfortable installing and configuring software on a Raspberry Pi or a similar Linux system using Github. You will be making modifications to your system, and there is a chance you screw things up. You do so at your own risk.
-3. You should have GIT installed on your Raspberry Pi. If you don't, you can add it by typing the following on the command line: `sudo apt install git` 
-4. You should know how to use your Raspberry Pi's default text editor called `nano`. Most importantly, you should remember that you can save your edits with `CTRL-o` and exit from the editor with `CTRL-x`.
+3. Feel free to inspect the installation scripts. It's generally a good security practice to make sure you understand and agree what they are doing, before you run a script written by a stranger on your machine. 
 
-### Note - don't install as user `root`
+
+### Note - don't (ever!) install as user `root`
 When you follow the instructions below, I strongly recommend to install all software and scripts as user `pi` and NOT as user `root`. Reasons for this include general system security, but also - once you run PlaneFence as `root`, it will create files that cannot be read or overwritten by any other user, and this stops your ability to run `PlaneFence` as user `pi` in the future.
 So, please stick with user `pi`.
 
@@ -42,13 +42,13 @@ Again -- if you come across any errors, please let us know. You can resolve them
 
 ## catchup.sh
 
-This script will do a "catch-up" run. You should use this sparingly. It will iterate through all `/tmp/dump1090*.txt` files and create PlaneFence pages for them.
+This script will do a "catch-up" run. You should use this sparingly - under normal circumstances, you will never need it. It will iterate through all `/tmp/dump1090*.txt` files and create PlaneFence pages for them.
 Usage: `/usr/share/planefence/catchup.sh [days]`
 Example: `/usr/share/planefence/catchup.sh 1`
 The optional `days` argument indicates how many days of history the script will generate, with "1" being today, and "8" being today + the previous 7 days. The script will skip those days for which there is no data available.
 
 # Seeing your PlaneFence page
-Once you have run the app at least once, you can find it at `http://<address_of_rpi>/planefence`.
+Once the app is running, you can find the results at `http://<address_of_rpi>/planefence`. Give it a few minutes after installation!
 Replace `<address_of_rpi>` with whatever the address is you normally use to get to the SkyAware or Dump1090 map.
 For reference, see (http://planefence.ramonk.net).
 
