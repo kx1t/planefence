@@ -29,7 +29,7 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see https://www.gnu.org/licenses/.
 clear
-echo "Welcome to PlaneFence Uninstall - version200617-1220"
+echo "Welcome to PlaneFence Uninstall - version200617-1245"
 echo "https://github.com/kx1t/planefence"
 echo "Copyright 2020 by Ramón F. Kolb"
 echo ""
@@ -82,8 +82,8 @@ if [ "${choice:0:1}" != "d" ]
 then
   echo -n "Saving your data to $HOME/planefence-data... "
   [ ! -d "$HOME/planefence-data" ] && mkdir "$HOME/planefence-data"
-  cp $OUTFILEDIR/*.csv $HOME/planefence-data
-  cp /tmp/noicecapt-*.log $HOME/planefence-data
+  cp $OUTFILEDIR/*.csv $HOME/planefence-data 2>/dev/null
+  cp /tmp/noisecapt-*.log $HOME/planefence-data 2>/dev/null
   echo "done!"
 fi
 
@@ -105,7 +105,7 @@ then
   if [ "${choice:0:1}" != "l" ]
   then
     echo -n "Deleting $HOME/git/planefence... "
-    sudo rm -f $HOME/git/planefence
+    sudo rm -rf $HOME/git/planefence
     echo "done!"
   fi
 fi
