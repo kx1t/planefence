@@ -224,6 +224,8 @@ chmod u+rwx,go+rx-w "$INSTALLDIRECTORY"
 
 ./install.pl -install "$INSTALLDIRECTORY"
 
+chmod a+x "$INSTALLDIRECTORY"/*.pl
+
 echo ""
 echo "--------------------------------------------------------------------"
 echo ""
