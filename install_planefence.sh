@@ -191,22 +191,16 @@ do
 done
 
 echo ""
-if [ -d "$/usr/share/sock30003" ]
+echo "--------------------------------------------------------------------"
+echo ""
+echo "NEXT - SOCKET30003 INSTALLATION"
+if [ "$(crontab -l |grep socket30003 | wc -l)" -gt "0" ]
 then
-	SOCKDIR="/usr/share/socket30003"
-	echo "We found the home directory of Socket30003 as "$SOCKDIR"."
-	read -p "Press ENTER to use this, or type a custom directory name: " a
-	[ "$a" != "" ] && SOCKDIR="$a"
-elif [ -d "$HOME/socket30003" ]
-then
-	SOCKDIR="$HOME/socket30003"
-	echo "We found the home directory of Socket30003 as "$SOCKDIR"."
-	read -p "Press ENTER to use this, or type a custom directory name: " a
-	[ "$a" != "" ] && SOCKDIR="$a"
-elif [ -d "$HOME/sock30003" ]
-then
-	SOCKDIR="$HOME/sock30003"
-	echo "We found the home directory of Socket30003 as "$SOCKDIR"."
+	echo "We think that Socket30003 has already been installed here:"
+	read -raa <<< $(crontab -l |grep socket30003)
+	SOCKDIR=$(dirname ${a[6]})
+	echo $SOCKDIR
+	unset a
 	read -p "Press ENTER to use this, or type a custom directory name: " a
 	[ "$a" != "" ] && SOCKDIR="$a"
 else
