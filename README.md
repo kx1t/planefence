@@ -29,16 +29,16 @@ When you follow the instructions below, I strongly recommend to install all soft
 So, please stick with user `pi`.
 
 
-### AUTO-INSTALL (UNTESTED/DO AT YOUR OWN RISK)
+### AUTO-INSTALLATION
 You can automatically install and configure PlaneFence by logging into your Raspberry Pi as user `pi`, and then copying / pasting the following line:
 
 ```
 bash -c "$(wget -q -O - https://raw.githubusercontent.com/kx1t/planefence/master/install_planefence.sh)"
 ```
 
-Note -- if `dump1090.socket30003` isn't already installed in one of the most common locations, this install script will also attempt to install that file
+Note -- if `dump1090.socket30003` isn't already installed and running, this install script will also attempt to install that package.
 
-Again -- if you come across any errors, please let us know. You can resolve them by following the manual instructions described in README-manual-install.md
+If you come across any errors, please let us know. You can resolve them by following the manual instructions described in README-manual-install.md
 
 ## catchup.sh
 
