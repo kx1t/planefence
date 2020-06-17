@@ -40,13 +40,6 @@ Note -- if `dump1090.socket30003` isn't already installed and running, this inst
 
 If you come across any errors, please let us know. You can resolve them by following the manual instructions described in README-manual-install.md
 
-## catchup.sh
-
-This script will do a "catch-up" run. You should use this sparingly - under normal circumstances, you will never need it. It will iterate through all `/tmp/dump1090*.txt` files and create PlaneFence pages for them.
-Usage: `/usr/share/planefence/catchup.sh [days]`
-Example: `/usr/share/planefence/catchup.sh 1`
-The optional `days` argument indicates how many days of history the script will generate, with "1" being today, and "8" being today + the previous 7 days. The script will skip those days for which there is no data available.
-
 # Seeing your PlaneFence page
 Once the app is running, you can find the results at `http://<address_of_rpi>/planefence`. Give it a few minutes after installation!
 Replace `<address_of_rpi>` with whatever the address is you normally use to get to the SkyAware or Dump1090 map.
@@ -60,6 +53,13 @@ Detailed installation instructions can be accessed here:
 https://github.com/kx1t/planefence/blob/master/README-twitter.md
 
 If you want to see an example of how this works, go here: https://twitter.com/PlaneBoston
+
+# catchup.sh
+
+This script will do a "catch-up" run. You should use this sparingly - under normal circumstances, you will never need it. It will iterate through all `/tmp/dump1090*.txt` files and create PlaneFence pages for them.
+Usage: `/usr/share/planefence/catchup.sh [days]`
+Example: `/usr/share/planefence/catchup.sh 1`
+The optional `days` argument indicates how many days of history the script will generate, with "1" being today, and "8" being today + the previous 7 days. The script will skip those days for which there is no data available.
 
 # Known Issues
 - Planes that are seen multiple times during consecutive runs, may show up multiple times
