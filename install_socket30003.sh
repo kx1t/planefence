@@ -2,7 +2,7 @@
 # INSTALL_SOCKET30003 - a Bash shell script to install Ted Sluis's socket30003
 # based on socket30003
 #
-# Usage: ./install_socket30003.sh
+# Usage: ./install_socket30003.sh [lat lon]
 # Or from your BASH command line on your Raspberry Pi:
 # bash -c "$(wget -q -O - https://raw.githubusercontent.com/kx1t/planefence/master/install_socket30003.sh)"
 #
@@ -91,88 +91,107 @@ echo ""
 echo "--------------------------------------------------------------------"
 echo ""
 echo "Now installing configuring Socket30003..."
+
+[ ! -z "$1" ] && LATITUDE="$1"
+[ ! -z "$2" ] && LONGITUDE="$2"
+
 a=""
 while [ "$a" != "y" ]
 do
-	read -p "Enter your latitude in decimal degrees N, for example 42.39663: " LATITUDE
+	if [ ! -z "$LATITUDE" ]
+	then
+		echo "You indicated that your station latitude is $LATITUDE."
+	else
+		read -p "Enter your latitude in decimal degrees N, for example 42.39663: " LATITUDE
+	fi
 	echo "Your station latitute is $LATITUDE"
+
 	echo ""
-	read -p "Enter your longitude in decimal degrees E, for example -71.17726: " LONGITUDE
+	if [ ! -z "$LONGITUDE" ]
+	then
+		echo "You indicated that your station latitude is $LONGITUDE."
+	else
+		read -p "Enter your longitude in decimal degrees E, for example -71.17726: " LONGITUDE
+	fi
 	echo "Your station longitude is $LONGITUDE"
+	echo ""
+	read "Please confirm that these coordinates are correct? (Y/n): " a
+	[ "$a" == "n" ] && continue
+	
 	echo ""
 	echo "Let's establish some range parameters."
 	echo "Please note that the default units are those that you set in socket30003."
 	echo "If you like to keep the default values, simply press ENTER for each question."
 	
 	DISTUNIT="kilometer"
-  ALTUNIT="meter"
-  SPEEDUNIT="kilometerph"
-  INSTALLDIRECTORY="/usr/share/socket30003"
+  	ALTUNIT="meter"
+  	SPEEDUNIT="kilometerph"
+  	INSTALLDIRECTORY="/usr/share/socket30003"
 	echo ""
-  echo "DISTANCE"
-  echo "Default: $DISTUNIT - press enter to keep this value"
-  echo "1) kilometer"
-  echo "2) nauticalmile"
-  echo "3) mile"
-  echo "4) meter"
+  	echo "DISTANCE"
+  	echo "Default: $DISTUNIT - press enter to keep this value"
+  	echo "1) kilometer"
+  	echo "2) nauticalmile"
+  	echo "3) mile"
+  	echo "4) meter"
 	read -p "Enter 1-4: " b
-  case "$b" in
-    1)
-      DISTUNIT="kilometer"
-      ;;
-    2)
-      DISTUNIT="nauticalmile"
-      ;;
-    3)
-      DISTUNIT="mile"
-      ;;
-    4)
-      DISTUNIT="meter"
-   esac
+  	case "$b" in
+  	  1)
+ 	     DISTUNIT="kilometer"
+	     ;;
+	  2)
+      	     DISTUNIT="nauticalmile"
+      	     ;;
+    	  3)
+      	     DISTUNIT="mile"
+      	     ;;
+ 	  4)
+      	     DISTUNIT="meter"
+   	esac
    
-  echo ""
-  echo "ALTITUDE"
-  echo "Default: $ALTUNIT - press enter to keep this value"
-  echo "1) meter"
-  echo "2) feet"
+  	echo ""
+  	echo "ALTITUDE"
+  	echo "Default: $ALTUNIT - press enter to keep this value"
+	echo "1) meter"
+	echo "2) feet"
 	read -p "Enter 1-2: " b
-  case "$b" in
-    1)
-      ALTUNIT="meter"
-      ;;
-    2)
-      ALTUNIT="feet"
-   esac
+  	case "$b" in
+    	   1)
+      		ALTUNIT="meter"
+      		;;
+    	   2)
+      		ALTUNIT="feet"
+   	esac
    
-  echo ""
-  echo "SPEED"
-  echo "Default: $SPEEDUNIT - press enter to keep this value"
-  echo "1) kilometer per hour"
-  echo "2) knot per hour"
-  echo "3) mile per hour"
-  read -p "Enter 1-3: " b
-  case "$b" in
-    1)
-      SPEEDUNIT="kilometerph"
-      ;;
-    2)
-      SPEEDUNIT="knotph"
-      ;;
-    3)
-      SPEEDUNIT="mileph"
-  esac
+  	echo ""
+  	echo "SPEED"
+  	echo "Default: $SPEEDUNIT - press enter to keep this value"
+	echo "1) kilometer per hour"
+  	echo "2) knot per hour"
+  	echo "3) mile per hour"
+  	read -p "Enter 1-3: " b
+  	case "$b" in
+    		1)
+      			SPEEDUNIT="kilometerph"
+      			;;
+    		2)
+      			SPEEDUNIT="knotph"
+      			;;
+    		3)
+      			SPEEDUNIT="mileph"
+  	esac
    
-  echo ""
-  echo "INSTALL DIRECTORY"
-  echo "Default: $INSTALLDIRECTORY"
-  read -p "Press Enter to keep this, or type an installation directory below: " b
-  [ "$b" != "" ] && INSTALLDIRECTORY="$b"
+  	echo ""
+  	echo "INSTALL DIRECTORY"
+	echo "Default: $INSTALLDIRECTORY"
+  	read -p "Press Enter to keep this, or type an installation directory below: " b
+  	[ ! -z "$b" ] && INSTALLDIRECTORY="$b"
    
-  echo ""
-  echo "--------------------------------------------------------------------"
-  echo ""
-	echo Check if your answers are correct. Do you want to continue?""
-	read -p "(Answering \"N\" will allow you to re-enter your data.) (y/N) " a
+  	echo ""
+  	echo "--------------------------------------------------------------------"
+  	echo ""
+  	echo "Check if your answers are correct. Do you want to continue?"
+  	read -p "(Answering \"N\" will allow you to re-enter your data.) (y/N) " a
 done
 
 echo ""
