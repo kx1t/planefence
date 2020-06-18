@@ -167,11 +167,29 @@ echo ""
 a=""
 while [ "$a" != "y" ]
 do
-	read -p "Enter your latitude in decimal degrees N, for example 42.39663: " LATITUDE
+	LATITUDE="$(cat /etc/default/dump1090* | grep -oP '(?<=lat )[^ ]*')"
+	LONGITUDE="$(cat /etc/default/dump1090* | grep -oP '(?<=lon )[^ ]*')"
+	[ "$LATITUDE$LONGITUDE" != "" ] && echo "We found your Lat/Lon in your dump1090 setup as $LONGITUDE N/$LATITUDE E".
+	echo -n "Enter your latitude in decimal degrees N, "
+	[ "$LATITUDE$LONGITUDE" != "" ] && read -p "or press enter to keep $LATITUDE: " b || read -p "for example 42.39663: " b
+	[ "$b" != "" ] && $LATITUDE="$b"
+	if [ "$LATITUDE" == "" ]
+	then
+		echo "You must enter a Latitude to continue. Try again!"
+		continue;
+	fi	
 	echo "Your station latitute is $LATITUDE"
 	echo ""
-	read -p "Enter your longitude in decimal degrees E, for example -71.17726: " LONGITUDE
-	echo "Your station longitude is $LONGITUDE"
+	
+	echo -n "Enter your longitude in decimal degrees E, "
+	[ "$LATITUDE$LONGITUDE" != "" ] && read -p "or press enter to keep $LONGITUDE: " b || read -p "for example -71.1772: " b
+	[ "$b" != "" ] && $LONGITUDE="$b"
+	if [ "$LONGITUDE" == "" ]
+	then
+		echo "You must enter a Longitude to continue. Try again!"
+		continue;
+	fi	
+
 	echo ""
 	echo "Let's establish some range parameters."
 	echo "Please note that the default units are those that you set in socket30003."
