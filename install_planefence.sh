@@ -29,7 +29,7 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see https://www.gnu.org/licenses/.
 clear
-echo "Welcome to PlaneFence Setup - version200616-1817"
+echo "Welcome to PlaneFence Setup - version200618-1600"
 echo "https://github.com/kx1t/planefence"
 echo "Copyright 2020 by Ramón F. Kolb, with collaborations by Rodney Yeo"
 echo ""
@@ -189,7 +189,7 @@ do
 		echo "You must enter a Longitude to continue. Try again!"
 		continue;
 	fi	
-
+	echo "Your station longitude is $LONGITUDE"
 	echo ""
 	echo "Let's establish some range parameters."
 	echo "Please note that the default units are those that you set in socket30003."
