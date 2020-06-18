@@ -100,7 +100,14 @@ else
 	echo "Are you sure FlightAware or Dump1090 is correctly installed?"
 	echo "If you are sure and know the directory name, type it here."
 	read -p "Otherwise, please press ENTER to exit the installation script: " a
-	[ "$a" != "" ] && DUMPDIR="$a" || exit -1
+	if [ "$a" != "" ]
+	then
+		DUMPDIR="$a"
+	else
+		echo "To install dump1090-fa, you can find easy to follow instructions at:"
+		echo "https://github.com/wiedehopf/adsb-scripts/wiki/Automatic-installation-for-dump1090-fa"
+		exit -1
+	fi
 fi
 
 echo "--------------------------------------------------------------------"
