@@ -66,6 +66,14 @@ The optional `days` argument indicates how many days of history the script will 
 - The script hasn't been thoroughly tested. Please provide feedback and exerpts of /tmp/planefence.log that show the activites around the time the issues occurred.
 - The code is a bit messy and at times, disorganized. However, it's overly documented and should be easy to understand and adapt.
 
+# Uninstalling PlaneFence
+
+You can automatically uninstall PlaneFence and its dependencies by logging into your Raspberry Pi as user `pi`, and then copying / pasting the following line:
+
+```
+bash -c "$(wget -q -O - https://raw.githubusercontent.com/kx1t/planefence/master/uninstall_planefence.sh)"
+```
+
 # Summary of License Terms
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
