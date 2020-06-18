@@ -110,6 +110,68 @@ then
   fi
 fi
 
+if [ "$(crontab -l |grep socket30003 | wc -l)" -gt "0" ]
+then
+	read -raa <<< $(crontab -l |grep socket30003)
+	SOCKDIR=$(dirname ${a[6]})
+  unset a
+	echo "We found an installation of Socket30003 here: $SOCKDIR"
+  echo "WARNING: this installation may be used for other applications as well."
+  echo "If in doubt, please answer NO below."
+  read -p "Do you want to remove it? (y/N): " a
+  if [ "${a:0:1}" == "y" ]
+  then
+    #remove the CRONTAB
+    echo "Removing socket30003 crontab..."
+    #write out current crontab
+    crontab -l > /tmp/mycron 2>/dev/null
+    # remove crontab from file
+    sed '/socket30003[.]/d' /tmp/mycron
+    #install new cron file
+    crontab /tmp/mycron
+    rm /tmp/mycron
+    echo "Removing socket30003 install folder..."
+    sudo rm -rf "$SOCKDIR"
+    echo "The /tmp directory may contain valuable data collected by Socket30003."
+    echo "We can save this data for you in $HOME/planefence-data."
+    read -p "Do you want to (s)ave this data, or (d)elete it? (S/d) " choice
+    if [ "${choice:0:1}" != "d" ]
+      then
+        echo -n "Saving your data to $HOME/planefence-data... "
+        [ ! -d "$HOME/planefence-data" ] && mkdir "$HOME/planefence-data"
+        cp /tmp/dump1090-127_0_0_1-*.txt $HOME/planefence-data 2>/dev/null
+        cp /tmp/dump1090-127_0_0_1-*.log $HOME/planefence-data 2>/dev/null
+    fi
+  fi
+  
+  if [ -d "$HOME/git/dump1090.socket30003" ]
+  then
+    echo ""
+    echo "You cloned Socket3003 from GitHub to $HOME/git/dump1090.socket30003".
+    read -p "Do you want to (D)elete this data, or (l)eave it alone? (D/l) " choice
+    if [ "${choice:0:1}" != "l" ]
+    then
+      echo -n "Deleting $HOME/git/dump1090.socket30003... "
+      sudo rm -rf $HOME/git/dump1090.socket30003
+      echo "done!"
+    fi
+  fi
+  echo "Done removing Socket30003"
+fi
+
+if [ -d "$HOME/git/planefence" ]
+then
+  echo ""
+  echo "You cloned PlaneFence from GitHub to $HOME/git/planefence".
+  read -p "Do you want to (D)elete this data, or (l)eave it alone? (D/l) " choice
+  if [ "${choice:0:1}" != "l" ]
+  then
+    echo -n "Deleting $HOME/git/planefence... "
+    sudo rm -rf $HOME/git/planefence
+    echo "done!"
+  fi
+fi
+
 echo ""
 echo "--------------------------------------------------------------------"
 echo ""
