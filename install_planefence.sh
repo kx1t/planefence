@@ -29,7 +29,7 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see https://www.gnu.org/licenses/.
 clear
-echo "Welcome to PlaneFence Setup - version200618-1615"
+echo "Welcome to PlaneFence Setup - version200618-1630"
 echo "https://github.com/kx1t/planefence"
 echo "Copyright 2020 by Ramón F. Kolb, with collaborations by Rodney Yeo"
 echo ""
@@ -236,6 +236,11 @@ else
 	[ "$a" != "" ] && SOCKDIR="$a" || bash -c "$(wget -q -O - https://raw.githubusercontent.com/kx1t/planefence/master/install_socket30003.sh)" install_socket30003.sh $LATITUDE $LONGITUDE
 	if [ "$SOCKDIR" == "" ]
 	then
+		clear
+		echo "--------------------------------------------------------------------"
+		echo "Welcome back to PlaneFence Installation and Configuration."
+		echo "Socket30003 was successfully installed and configured. Let's go on to the next thing!"
+		echo ""
 		read -raa <<< $(crontab -l |grep socket30003)
 		SOCKDIR=$(dirname ${a[6]})
 	fi
