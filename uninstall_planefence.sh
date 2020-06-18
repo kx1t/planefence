@@ -126,7 +126,7 @@ then
     #write out current crontab
     crontab -l > /tmp/mycron 2>/dev/null
     # remove crontab from file
-    sed '/socket30003[.]/d' /tmp/mycron
+    sed -i '/socket30003[.]/d' /tmp/mycron
     #install new cron file
     crontab /tmp/mycron
     rm /tmp/mycron
