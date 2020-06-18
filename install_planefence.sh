@@ -292,7 +292,7 @@ echo ""
 echo "--------------------------------------------------------------------"
 echo ""
 echo "Done!"
-echo "You can find more settings in /usr/share/planefence/planefence.conf
+echo "You can find more settings in /usr/share/planefence/planefence.conf"
 echo "Feel free to look at those and change them to your liking."
 echo ""
 echo "Sayonara! Best regards 
