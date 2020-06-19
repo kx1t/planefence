@@ -41,8 +41,9 @@
 # STRONGLY RECOMMENDED to RTFM! See README.md for explanation of what these do.
 #
 # LOOPTIME is the time between two runs of noisecapt (in seconds)
-# Do not set this to less than about 120 seconds as it will overload your system
-LOOPTIME=0
+# Since Noisecapt.sh already runs forever by itself, noisecapt is the time between a failure of the script, and
+# the system trying to re-start it. This can safely be set to a few seconds.
+LOOPTIME=5
 #
 # NOISECAPTDIR contains the directory where noisecapt.sh is location 
 NOISECAPTDIR=/usr/share/planefence
