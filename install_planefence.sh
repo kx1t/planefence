@@ -122,7 +122,7 @@ read -p "Press enter to start."
 
 sudo apt update -y
 sudo apt upgrade -y
-sudo apt install -y python-pip python-numpy python-pandas python-dateutil jq bc gnuplot git
+sudo apt install -y python-pip python-numpy python-pandas python-dateutil jq bc gnuplot git sox
 sudo pip install tzlocal
 
 echo "--------------------------------------------------------------------"
@@ -283,6 +283,48 @@ sed -i 's/\(^\s*LAT=\).*/\1'"$LATITUDE"'/' /usr/share/planefence/planeheat.sh
 sed -i 's/\(^\s*LON=\).*/\1'"$LONGITUDE"'/' /usr/share/planefence/planeheat.sh
 sed -i 's/\(^\s*MAXALT=\).*/\1'"$MAXALT"'/' /usr/share/planefence/planeheat.sh
 sed -i 's/\(^\s*DIST=\).*/\1'"$DIST"'/' /usr/share/planefence/planeheat.sh
+
+echo ""
+echo "--------------------------------------------------------------------"
+echo ""
+echo "OPTIONAL ADD-ONS"
+echo ""
+echo "NoiseCapt add-on"
+echo "If you have a soundcard / microphone that you can dedicate to \"listen\""
+echo "continuously for sound levels closeby your ADS-B station, you can enable"
+echo "NoiseCapt to capture the sound levels and graph them for each plane that"
+echo "is in range for PlaneFence."
+echo "A quick-n-dirty way of implementing this is to connect an old webcam with microphone"
+echo "to your Raspberry Pi. Only the microphone will be used. The camera won't be used."
+echo ""
+echo "If you have such a device, please connect it to your Raspberry Pi before going any further."
+read "Press ENTER to continue, and we will try to detect it."
+CARD=$(arecord -l |grep -oP "card\s+\K\w+")
+DEVICE=$(arecord -l |grep -oP "device\s+\K\w+")
+if [ "$CARD$DEVICE" == "" ]
+then
+	echo "I cannot find any sound recording devices. If you think that this is a mistake, please"
+	echo "following the instructions in /usr/share/planefence/noisecapt.sh on how to manually configure it."
+else
+	echo "I found an audio device on Card $CARD / Device $DEVICE."
+	read -p "Do you want to use this device? If you are not sure, you can always manually configure it afterwards. (Y/n)" a
+	if [ ${a:0:1} != "n" ]
+	then
+		echo "Enabling NoiseCapt..."
+		sudo cp ~/git/noisecapt/service/noisecapt.service /lib/systemd/system/
+		sudo systemctl daemon-reload
+		sudo systemctl enable noisecapt
+		sudo systemctl start noisecapt
+		echo "NoiseCapt enabled!"
+		echo "Note - you can always temporary stop NoiseCapt by issuing the following command:"
+		echo "sudo systemctl stop noisecapt # stop noisecapt until the next reboot"
+		echo "sudo systemctl disable noisecapt # do not restart noisecapt after the next reboot"
+	else
+		echo "NoiseCapt won't be enabled."
+		echo "If you wish to enable it in the future, please follow the instructions at /usr/share/planefence/noisecapt.sh"
+	fi
+fi
+
 
 echo ""
 echo "--------------------------------------------------------------------"
