@@ -93,9 +93,7 @@ do
 	# put the dB value into LEVEL as an integer. BASH arithmatic doesn't like
 	# float values, so we need to do some trickery to convert the number:
 	LC_ALL=C printf -v LEVEL '%.0f' "${RMS[3]}"
-        # LEVEL=${RMS[3]}
         AUDIOTIME=$(date +%s)
-	LOG "Level=$LEVEL Audiotime=$AUDIOTIME"
         # capture and calculate the averages
         # determine the number of records in today's log
         if [ -f "$LOGTODAY" ]
@@ -105,7 +103,6 @@ do
         else
                 LOGLINES=0
         fi
-	LOG "Today's log has $LOGLINES lines"
 
         # create a TMP file with the records we need
         if [ "$ONEHOUR" -gt $LOGLINES ]
