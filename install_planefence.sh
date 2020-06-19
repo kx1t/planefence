@@ -28,7 +28,7 @@
 #
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see https://www.gnu.org/licenses/.
-VERSION="200619-1145"
+VERSION="200619-1445"
 clear
 echo "Welcome to PlaneFence Setup - version $VERSION"
 echo "https://github.com/kx1t/planefence"
