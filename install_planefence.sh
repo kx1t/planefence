@@ -325,10 +325,24 @@ else
 	fi
 fi
 
-
+echo "--------------------------------------------------------------------"
+echo ""
+echo "OPTIONAL ADD-ONS"
+echo ""
+echo "PlaneTweet add-on"
+echo ""
+echo "PlaneTweet enables sending out a Tweet every time a plane goes through the PlaneFence coverage area."
+echo "In order to use PlaneTweet, you will need to sign up for a Twitter Developer account." 
+echo "Unfortunately, this isn't easily automated. As such, it made little sense to include PlaneTweet configuration in this script."
+echo ""
+echo "You can find and follow instructions to install and configure PlaneTweet here:"
+echo "https://github.com/kx1t/planefence/blob/master/README-planetweet.md"
+echo ""
+read -p "Press ENTER to continue..."
 echo ""
 echo "--------------------------------------------------------------------"
 echo ""
+echo "Almost done. PlaneFence is fully installed and configured, all we need to do is start it:"
 echo "Starting PlaneFence service..."
 
 sudo systemctl daemon-reload
