@@ -29,7 +29,7 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see https://www.gnu.org/licenses/.
 clear
-echo "Welcome to PlaneFence Setup - version200619-0630"
+echo "Welcome to PlaneFence Setup - version200619-0645"
 echo "https://github.com/kx1t/planefence"
 echo "Copyright 2020 by Ramón F. Kolb, with collaborations by Rodney Yeo"
 echo ""
@@ -169,7 +169,7 @@ while [ "$a" != "y" ]
 do
 	LATITUDE="$(cat /etc/default/dump1090* | grep -oP '(?<=lat )[^ ]*')"
 	LONGITUDE="$(cat /etc/default/dump1090* | grep -oP '(?<=lon )[^ ]*')"
-	[ "$LATITUDE$LONGITUDE" != "" ] && echo "We found your Lat/Lon in your dump1090 setup as $LONGITUDE N/$LATITUDE E".
+	[ "$LATITUDE$LONGITUDE" != "" ] && echo "We found your Lat/Lon in your dump1090 setup as $LATITUDE N/$LONGITUDE E".
 	echo -n "Enter your latitude in decimal degrees N, "
 	[ "$LATITUDE$LONGITUDE" != "" ] && read -p "or press enter to keep $LATITUDE: " b || read -p "for example 42.39663: " b
 	[ "$b" != "" ] && LATITUDE="$b"
