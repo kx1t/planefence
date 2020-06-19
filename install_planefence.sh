@@ -29,7 +29,7 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see https://www.gnu.org/licenses/.
 clear
-echo "Welcome to PlaneFence Setup - version200618-1630"
+echo "Welcome to PlaneFence Setup - version200619-0630"
 echo "https://github.com/kx1t/planefence"
 echo "Copyright 2020 by Ramón F. Kolb, with collaborations by Rodney Yeo"
 echo ""
@@ -172,7 +172,7 @@ do
 	[ "$LATITUDE$LONGITUDE" != "" ] && echo "We found your Lat/Lon in your dump1090 setup as $LONGITUDE N/$LATITUDE E".
 	echo -n "Enter your latitude in decimal degrees N, "
 	[ "$LATITUDE$LONGITUDE" != "" ] && read -p "or press enter to keep $LATITUDE: " b || read -p "for example 42.39663: " b
-	[ "$b" != "" ] && $LATITUDE="$b"
+	[ "$b" != "" ] && LATITUDE="$b"
 	if [ "$LATITUDE" == "" ]
 	then
 		echo "You must enter a Latitude to continue. Try again!"
@@ -183,7 +183,7 @@ do
 	
 	echo -n "Enter your longitude in decimal degrees E, "
 	[ "$LATITUDE$LONGITUDE" != "" ] && read -p "or press enter to keep $LONGITUDE: " b || read -p "for example -71.1772: " b
-	[ "$b" != "" ] && $LONGITUDE="$b"
+	[ "$b" != "" ] && LONGITUDE="$b"
 	if [ "$LONGITUDE" == "" ]
 	then
 		echo "You must enter a Longitude to continue. Try again!"
