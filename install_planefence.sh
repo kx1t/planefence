@@ -176,7 +176,7 @@ do
 	[ "$LATITUDE$LONGITUDE" != "" ] && echo "We found your Lat/Lon in your dump1090 setup as $LATITUDE N/$LONGITUDE E".
 	echo -n "Enter your latitude in decimal degrees N, "
 	[ "$LATITUDE" != "" ] && read -p "or press enter to keep $LATITUDE: " b || read -p "for example 42.39663: " b
-	[ "$b" != "" ] && LATITUDE="$(grep -m1 -Eo '[+-]?[0-9]+([.][0-9]+)?' <<< $b | head -1)
+	[ "$b" != "" ] && LATITUDE="$(grep -m1 -Eo '[+-]?[0-9]+([.][0-9]+)?' <<< $b | head -1)"
 	if [ "$LATITUDE" == "" ]
 	then
 		echo "You must enter a Latitude to continue. Try again!"
