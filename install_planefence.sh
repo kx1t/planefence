@@ -167,23 +167,27 @@ echo ""
 a=""
 while [ "$a" != "y" ]
 do
-	LATITUDE="$(cat /etc/default/dump1090* | grep -oP '(?<=lat )[^ ]*')"
-	LONGITUDE="$(cat /etc/default/dump1090* | grep -oP '(?<=lon )[^ ]*')"
+        # get lat/lon from dump1090 config and strip it from any extraneous characters
+	b="$(cat /etc/default/dump1090* | grep -oP '(?<=lat )[^ ]*')"
+        LATITUDE="$(grep -m1 -Eo '[+-]?[0-9]+([.][0-9]+)?' <<< $b | head -1)"
+	b="$(cat /etc/default/dump1090* | grep -oP '(?<=lon )[^ ]*')"
+        LONGITUDE="$(grep -m1 -Eo '[+-]?[0-9]+([.][0-9]+)?' <<< $b | head -1)"
+
 	[ "$LATITUDE$LONGITUDE" != "" ] && echo "We found your Lat/Lon in your dump1090 setup as $LATITUDE N/$LONGITUDE E".
 	echo -n "Enter your latitude in decimal degrees N, "
-	[ "$LATITUDE$LONGITUDE" != "" ] && read -p "or press enter to keep $LATITUDE: " b || read -p "for example 42.39663: " b
-	[ "$b" != "" ] && LATITUDE="$b"
+	[ "$LATITUDE" != "" ] && read -p "or press enter to keep $LATITUDE: " b || read -p "for example 42.39663: " b
+	[ "$b" != "" ] && LATITUDE="$(grep -m1 -Eo '[+-]?[0-9]+([.][0-9]+)?' <<< $b | head -1)
 	if [ "$LATITUDE" == "" ]
 	then
 		echo "You must enter a Latitude to continue. Try again!"
 		continue;
-	fi	
+	fi
 	echo "Your station latitute is $LATITUDE"
 	echo ""
 	
 	echo -n "Enter your longitude in decimal degrees E, "
-	[ "$LATITUDE$LONGITUDE" != "" ] && read -p "or press enter to keep $LONGITUDE: " b || read -p "for example -71.1772: " b
-	[ "$b" != "" ] && LONGITUDE="$b"
+	[ "$LONGITUDE" != "" ] && read -p "or press enter to keep $LONGITUDE: " b || read -p "for example -71.1772: " b
+	[ "$b" != "" ] && LONGITUDE="$(grep -m1 -Eo '[+-]?[0-9]+([.][0-9]+)?' <<< $b | head -1)"
 	if [ "$LONGITUDE" == "" ]
 	then
 		echo "You must enter a Longitude to continue. Try again!"
