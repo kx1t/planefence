@@ -34,19 +34,19 @@
 #                  if CALCDIST="", then the unit is whatever you used in your socket30003 setup
         LAT=42.39663 # Latitude of the center point of the map. *** SEE BELOW
         LON=-71.17726 # Longitude of the center point of the map. *** SEE BELOW
-        HISTTIME=7 # number of days shown in the history section of the website
+#        HISTTIME=7 # number of days shown in the history section of the website
 #       CALCDIST="" # if this variable is set to "", then planefence.py will use the reported distance from your station instead of recalculating it
-        CALCDIST="--calcdist" # if this variable is set to "--calcdist", then planefence.py will calculate the distance relative to LAT and LON as defined above
-        MY="KX1T's" # text for the header of the website
-        MYURL=".." # link for $MY in tge website's header
-        PLANETWEET="PlaneBoston" # Twitter handle for PlaneTweet. Comment this out if PlaneTweet is not available or disabled
-        RED="LightCoral" # background cell color for Loudness
-        YELLOW="Gold" # background cell color for Loudness
-        GREEN="YellowGreen" # background cell color for Loudness
-        GREENLIMIT=9 # Max. Loudness level to be shown green
-        YELLOWLIMIT=16 # Max. Loudness level to be shown yelloe
-        GRIDSIZE=100
-	STANDALONE="no" # Generates the heatmap as a stand-alone website with the proper headers ("yes") or as an HTML snippet meant to be inserted into another website ("no")
+#        CALCDIST="--calcdist" # if this variable is set to "--calcdist", then planefence.py will calculate the distance relative to LAT and LON as defined above
+#        MY="KX1T's" # text for the header of the website
+#        MYURL=".." # link for $MY in tge website's header
+#        PLANETWEET="PlaneBoston" # Twitter handle for PlaneTweet. Comment this out if PlaneTweet is not available or disabled
+#        RED="LightCoral" # background cell color for Loudness
+#        YELLOW="Gold" # background cell color for Loudness
+#        GREEN="YellowGreen" # background cell color for Loudness
+#        GREENLIMIT=9 # Max. Loudness level to be shown green
+#        YELLOWLIMIT=16 # Max. Loudness level to be shown yelloe
+#        GRIDSIZE=100
+#	STANDALONE="no" # Generates the heatmap as a stand-alone website with the proper headers ("yes") or as an HTML snippet meant to be inserted into another website ("no")
 			# Note: if "no", please make sure that the following elements are in the <head> section of the web page in which it is included:
 			# <link rel="stylesheet" href="leaflet.css" /><script src="leaflet.js"></script>
 
@@ -78,7 +78,8 @@
 #	LOGFILE=/dev/stdout
         CURRENT_PID=$$
         PROCESS_NAME=$(basename "$0")
-	TIMELOG=$(date +%s)
+#	TIMELOG=$(date +%s)
+	RAMON="yes"
 # -----------------------------------------------------------------------------------
 #
 # Let's see if there is a CONF file that overwrites some of the parameters already defined
@@ -258,9 +259,19 @@ cat <<EOF >"$OUTFILEHTML"
 <body style="font: 12px/1.4 "Helvetica Neue", Arial, sans-serif;" -->
 
 <div style="font: 12px/1.4 "Helvetica Neue", Arial, sans-serif;">
+EOF
+
+if [ "$RAMON" != "" ]
+then
+	cat <<EOF >"$OUTFILEHTML"
+
 	<p>Colors indicate fly-over frequency within the PlaneFence coverage area and timeframe as shown above. They are unrelated to perceived noise levels. A heatmap for the general area is available <a href="../heatmap" target="_blank">here</a>.<br/>
            Note that the area within 1000 ft around the Rt.60 (Pleasant St) / Rt.2 intersection is under-represented because of the antenna angle.
         </p>
+EOF
+fi
+
+cat <<EOF >"$OUTFILEHTML"
 </div>
 
 <div id="map" style="width: 75vw; height: 40vh"></div>

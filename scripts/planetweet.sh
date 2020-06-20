@@ -74,6 +74,9 @@ else
 	TWEETDATE=$(date --date="today" '+%y%m%d')
 fi
 
+[ "$2" != "" ] && HEADR[5]="Min. Dist. ($2)"
+[ "$3" != "" ] && HEADR[4]="Min. Alt. ($3)"
+
 CSVFILE=$CSVNAMEBASE$TWEETDATE$CSVNAMEEXT
 #CSVFILE=/tmp/planefence-200526.csv
 # make sure there's no stray TMP file around, so we can directly append
@@ -111,7 +114,7 @@ then
 
                         # If there is sound level data, then add a Loudness factor (peak RMS - 1 hr avg) to the tweet.
                         # There is more data we could tweet, but we're a bit restricted in real estate on twitter.
-                        (( RECORD[7] < 0 )) && TWEET="$TWEET${HEADR[8]}: ${RECORD[7]} dBFS%0A${HEADR[7]}: $(( RECORD[7] - RECORD[11] )) dB%0A"
+                        (( RECORD[7] < 0 )) && TWEET="$TWEET${HEADR[8]}: ${RECORD[7]} dBFS%0A${HEADR[7]}: $(( RECORD[7] - RECORD[10] )) dB%0A"
 
                         # Now add the last field without title or training Newline
                         # Reason: this is a URL that Twitter reinterprets and previews on the web
@@ -128,7 +131,7 @@ then
                         if [ "$TWEETON" == "yes" ]; then
                                 # $TWURLPATH/twurl -q -r "status=$TWEET" /1.1/statuses/update.json
 				# send a tweet and read the link to the tweet into ${LINK[1]}
-				LINK=$(echo `$TWURLPATH/twurl -r "status=$TWEET" /1.1/statuses/update.json` | tee -a /tmp/tweets.log | jq '.entities."urls" | .[] | .url' | tr -d '\"')
+				LINK=$(echo `"$TWURLPATH"twurl -r "status=$TWEET" /1.1/statuses/update.json` | tee -a /tmp/tweets.log | jq '.entities."urls" | .[] | .url' | tr -d '\"')
 			else
 				LOG "(A tweet would have been sent but \$TWEETON=\"$TWEETON\")"
                         fi

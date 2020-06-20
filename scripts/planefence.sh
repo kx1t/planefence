@@ -25,41 +25,91 @@
 # You should have received a copy of the GNU General Public License along with this program.
 # If not, see https://www.gnu.org/licenses/.
 # -----------------------------------------------------------------------------------
-#
-# The variables and program parameters have been moved to 'planefence.conf'. Please
-# make changes there.
+	PLANEFENCEDIR=/usr/share/planefence # the directory where this file and planefence.py are located
 # -----------------------------------------------------------------------------------
 # Only change the variables below if you know what you are doing.
 
-# FENCEDATE will be the date [yymmdd] that we want to process PlaneFence for.
-# The default value is 'today'.
+	# Let's see if there is a CONF file that defines some of the parameters
+	[ -f "$PLANEFENCEDIR/planefence.conf" ] && source "$PLANEFENCEDIR/planefence.conf"
 
-if [ "$1" != "" ] && [ "$1" != "reset" ]
-then # $1 contains the date for which we want to run PlaneFence
-	FENCEDATE=$(date --date="$1" '+%y%m%d')
-else
-	FENCEDATE=$(date --date="today" '+%y%m%d')
-fi
 
-CURRENT_PID=$$
-PROCESS_NAME=$(basename $0)
-systemctl is-active --quiet noisecapt && NOISECAPT=1 || NOISECAPT=0
+	if [ "$1" != "" ] && [ "$1" != "reset" ]
+	then # $1 contains the date for which we want to run PlaneFence
+		FENCEDATE=$(date --date="$1" '+%y%m%d')
+	else
+		FENCEDATE=$(date --date="today" '+%y%m%d')
+	fi
+
+	TMPDIR=/tmp
+	LOGFILEBASE=$TMPDIR/dump1090-127_0_0_1-
+	OUTFILEBASE=$OUTFILEDIR/planefence
+	OUTFILEHTML=$OUTFILEBASE-$FENCEDATE.html
+	OUTFILECSV=$OUTFILEBASE-$FENCEDATE.csv
+	OUTFILETMP=$TMPDIR/dump1090-pf-temp.csv
+	PLANEHEATHTML=$OUTFILEBASE-$FENCEDATE-heatmap.html
+	INFILETMP=$TMPDIR/dump1090-pf.txt
+	TMPLINES=$TMPDIR/dump1090-pf-temp-$FENCEDATE.tmp
+	HISTORY=history.html
+	HISTFILE=$OUTFILEDIR/$HISTORY
+	NOISEGRAPHBASE="noisegraph-$FENCEDATE"
+	CURRENT_PID=$$
+	PROCESS_NAME=$(basename $0)
+	systemctl is-active --quiet noisecapt && NOISECAPT=1 || NOISECAPT=0
 # -----------------------------------------------------------------------------------
 #
 
-# Read the parameters from the config file
-if [ -f "$PLANEFENCEDIR/planefence.conf" ]
+# Overwrite LOGFILE temporarily
+# LOGFILE=/dev/stdout
+LOGFILE=logger
+#
+# Determine the units used in SOCKET30003.
+
+# first get DISTANCE unit:
+DISTUNIT="mi"
+DISTCONV=1
+if [ "$SOCKETCONFIG" != "" ]
 then
-	source "$PLANEFENCEDIR/planefence.conf"
-else
-	echo $PLANEFENCEDIR/planefence.conf is missing. We need it to run PlaneFence! Go back to GitHub and get it from there!
-	exit 2
+	IFS=" =#" read -raa <<< $(grep -P '^(?=[\s]*+[^#])[^#]*(distanceunit)' $SOCKETCONFIG)
+	case "${a[1]}" in
+		nauticalmile)
+			DISTUNIT="nm"
+			[ "$DISPLAYUNIT" == "mi" ] && DISTCONV=0.868976
+			[ "$DISPLAYUNIT" == "km" ] && DISTCONV=0.539957 
+			;;
+		kilometer)
+			DISTUNIT="km"
+			[ "$DISPLAYUNIT" == "mi" ] && DISTCONV=0.621371
+			;;
+		mile)
+			DISTUNIT="mi"
+			[ "$DISPLAYUNIT" == "km" ] && DISTCONV=1.60934
+			;;
+		meter)
+			DISTUNIT="m"
+			[ "$DISPLAYUNIT" == "km" ] && DISTCONV=0.001000
+			[ "$DISPLAYUNIT" == "mi" ] && DISTCONV=0.000621371
+	esac
 fi
+
+# get ALTITUDE unit:
+ALTUNIT="feet"
+if [ "$SOCKETCONFIG" != "" ]
+then
+        IFS=" =#" read -raa <<< $(grep -P '^(?=[\s]*+[^#])[^#]*(altitudeunit)' $SOCKETCONFIG)
+        case "${a[1]}" in
+                feet)
+                        ALTUNIT="ft"
+                        ;;
+                meter)
+                        ALTUNIT="m"
+        esac
+fi
+
 
 #
 # Functions
 #
-# Function to write to the log
+# First create an function to write to the log
 LOG ()
 {
 	if [ -n "$1" ]
@@ -71,11 +121,19 @@ LOG ()
 
 	if [ "$VERBOSE" != "" ]
 	then
+		# set the color scheme in accordance to the log level urgency
+		if [ "$2" == "1" ]; then
+			COLOR="${blue}"
+		elif [ "$2" == "2" ]; then
+			COLOR="${red}"
+		else
+			COLOR=""
+		fi
 		if [ "$LOGFILE" == "logger" ]
 		then
-			printf "%s-%s[%s]v%s: %s\n" "$(date +"%Y%m%d-%H%M%S")" "$PROCESS_NAME" "$CURRENT_PID" "$VERSION" "$IN" | logger
+			printf "%s-%s[%s]v%s: %s%s${normal}\n" "$(date +"%Y%m%d-%H%M%S")" "$PROCESS_NAME" "$CURRENT_PID" "$VERSION" "$COLOR" "$IN" | logger
 		else
-			printf "%s-%s[%s]v%s: %s\n" "$(date +"%Y%m%d-%H%M%S")" "$PROCESS_NAME" "$CURRENT_PID" "$VERSION" "$IN" >> $LOGFILE
+			printf "%s-%s[%s]v%s: %s%s${normal}\n" "$(date +"%Y%m%d-%H%M%S")" "$PROCESS_NAME" "$CURRENT_PID" "$VERSION" "$COLOR" "$IN" >> $LOGFILE
 		fi
 	fi
 }
@@ -169,20 +227,47 @@ EOF
 
 			printf "<td>%s</td>\n" "${NEWVALUES[2]}" >>"$2" # time first seen
 			printf "<td>%s</td>\n" "${NEWVALUES[3]}" >>"$2" # time last seen
-			printf "<td>%s ft</td>\n" "${NEWVALUES[4]}" >>"$2" # min altitude
-			printf "<td>%s mi</td>\n" "${NEWVALUES[5]}" >>"$2" # min distance
+			printf "<td>%s %s</td>\n" "${NEWVALUES[4]}" "$ALTUNIT" >>"$2" # min altitude
+
+			if [ "$DISTUNIT" != "$DISPLAYUNIT" ]
+			then
+				printf "<td>%.2f %s</td>\n" "$(echo "${NEWVALUES[5]} * $DISTCONV" | bc -l)" "$DISPLAYUNIT" >>"$2" # min distance
+			else
+				printf "<td>%s %s</td>\n" "${NEWVALUES[5]}" "$DISTUNIT" >>"$2" # min distance
+			fi
 
 			# If MAXFIELDS>10 then there is definitely audio information.
 			if (( MAXFIELDS > 10 ))
 			then
 				# determine cell bgcolor
-				(( LOUDNESS = NEWVALUES[7] - NEWVALUES[11] ))
-				COLOR="$RED"
-				((  LOUDNESS <= YELLOWLIMIT )) && COLOR="$YELLOW"
-				((  LOUDNESS <= GREENLIMIT )) && COLOR="$GREEN"
-				# print Noise Values
-				printf "<td style=\"background-color: %s\">%s dB</td>\n" "$COLOR" "$LOUDNESS" >>"$2"
+				(( LOUDNESS = NEWVALUES[7] - NEWVALUES[10] ))
+				BGCOLOR="$RED"
+				((  LOUDNESS <= YELLOWLIMIT )) && BGCOLOR="$YELLOW"
+				((  LOUDNESS <= GREENLIMIT )) && BGCOLOR="$GREEN"
 
+				NOISEGRAPHLINK="$NOISEGRAPHBASE-$(date -d "${NEWVALUES[2]}" +%H%M%S)-"${NEWVALUES[0]}".png"
+				NOISEGRAPHFILE="$OUTFILEDIR"/"$NOISEGRAPHLINK"
+				[ "${NEWVALUES[1]:0:1}" == "@" ] && TITLE="Noise plot for ${NEWVALUES[1]:1} at ${NEWVALUES[3]}" || TITLE="Noise plot for ${NEWVALUES[1]} at ${NEWVALUES[3]}"
+				# generate noisegraph if it doesnt already exist
+				if [ ! -f "$NOISEGRAPHFILE" ] && [ $(( $(date +%s) - $(date -d "${NEWVALUES[3]}" +%s) )) -gt 300 ]
+				then
+					LOG "Invoking GnuPlot!"
+					# LOG "gnuplot -e offset=$(echo "`date +%z` * 36" | bc) -e start=$(date +%s -d '${NEWVALUES[2]}') -e end=$(date +%s -d '${NEWVALUES[3]}') -e infile=/tmp/noisecapt-$FENCEDATE.log -e outfile=$NOISEGRAPHFILE -e plottitle='$TITLE' -e margin=60 $PLANEFENCEDIR/noiseplot.gnuplot"
+					gnuplot -e "offset=$(echo "`date +%z` * 36" | bc); start=$(date +%s -d "${NEWVALUES[2]}"); end=$(date +%s -d "${NEWVALUES[3]}"); infile='/tmp/noisecapt-$FENCEDATE.log'; outfile='"$NOISEGRAPHFILE"'; plottitle='$TITLE'; margin=60" $PLANEFENCEDIR/noiseplot.gnuplot
+				else
+					LOG "Didnt write graph. Reason:"
+					[ -f "$NOISEGRAPHFILE" ] && LOG "$NOISEGRAPHFILE exists" || LOG "$NOISEGRAPHFILE doesn't exist"
+					LOG "Timediff is $(( $(date +%s) - $(date -d "${NEWVALUES[3]}" +%s) )) "
+				fi
+
+
+				# print Noise Values
+				if [ -f "$NOISEGRAPHFILE" ]
+				then
+					printf "<td style=\"background-color: %s\"><a href=\"%s\" target=\"_blank\">%s dB</a></td>\n" "$BGCOLOR" "$NOISEGRAPHLINK" "$LOUDNESS" >>"$2"
+				else
+					printf "<td style=\"background-color: %s\">%s dB</td>\n" "$BGCOLOR" "$LOUDNESS" >>"$2"
+				fi
 				for i in {7..11}
 				do
 					printf "<td>%s dBFS</td>\n" "${NEWVALUES[i]}" >>"$2"
@@ -315,7 +400,8 @@ tail --lines=+$READLINES $LOGFILEBASE"$FENCEDATE".txt > $INFILETMP
 
 # First, run planefence.py to create the CSV file:
 LOG "Invoking planefence.py..."
-$PLANEFENCEDIR/planefence.py --logfile=$INFILETMP --outfile=$OUTFILETMP --maxalt=$MAXALT --dist=$DIST --lat=$LAT --lon=$LON $VERBOSE $CALCDIST 2>&1 | LOG
+LOG "$PLANEFENCEDIR/planefence.py --logfile=$INFILETMP --outfile=$OUTFILETMP --maxalt=$MAXALT --dist=$DIST --distunit=$DISTUNIT --lat=$LAT --lon=$LON $VERBOSE $CALCDIST 2>&1 | LOG"
+$PLANEFENCEDIR/planefence.py --logfile=$INFILETMP --outfile=$OUTFILETMP --maxalt=$MAXALT --dist=$DIST --distunit=$DISTUNIT --lat=$LAT --lon=$LON $VERBOSE $CALCDIST 2>&1 | LOG
 LOG "Returned from planefence.py..."
 
 # Now we need to combine any double entries. This happens when a plane was in range during two consecutive Planefence runs
@@ -421,13 +507,13 @@ else
 	LOG "Info: Noise2Fence not enabled"
 fi
 
-# And see if we need to invoke PlaneTweet:
-if [ ! -z "$PLANETWEET" ]
+# And see if we need to invoke PlaneTweet (don't invoke if we ran planefence.sh with a command line arg):
+if [ ! -z "$PLANETWEET" ] && [ "$1" == "" ]
 then
 	LOG "Invoking PlaneTweet!"
-	$PLANEFENCEDIR/planetweet.sh
+	$PLANEFENCEDIR/planetweet.sh today "$DISTUNIT" "$ALTUNIT"
 else
-	LOG "Info: PlaneTweet not enabled"
+	[ "$1" == "" ] && LOG "Info: PlaneTweet not called because we're doing a manual full run" || LOG "Info: PlaneTweet not enabled"
 fi
 
 # And see if we need to run PLANEHEAT
@@ -436,11 +522,22 @@ then
 	LOG "Invoking PlaneHeat!"
 	$PLANEHEATSCRIPT
 	LOG "Returned from PlaneHeat"
+else
+	LOG "Skipped PlaneHeat"
 fi
 
-# We also need an updated history file that can be loaded into an IFRAME:
-# print HTML headers first, and a link to the "latest":
+# Now, let's see if the DISTUNIT and DISPLAYUNIT are the same. If not, we need to convert to DISPLAYUNIT:
 
+if [ "$DISPLAYUNIT" == "" ]
+then
+	DISPLAYUNIT="$DISTUNIT"
+	DISPLAYDIST="$DIST"
+fi
+
+if [ "$DISTUNIT" != "$DISPLAYUNIT" ]
+then
+	printf -v DISPLAYDIST "%.1f" "$(echo "$DIST * $DISTCONV" | bc -l)"
+fi
 
 # Next, we are going to print today's HTML file:
 # Note - all text between 'cat' and 'EOF' is HTML code:
@@ -505,8 +602,8 @@ cat <<EOF >>"$OUTFILEHTML"
 <h2>Show aircraft in range of <a href="$MYURL" target="_top">$MY</a> ADS-B PiAware station for a specific day</h2>
 <ul>
    <li>Last update: $(date +"%b %d, %Y %R:%S %Z")
-   <li>Maximum distance from <a href="https://www.openstreetmap.org/?mlat=$LAT&mlon=$LON#map=14/$LAT/$LON&layers=H" target=_blank>${LAT}&deg;N, ${LON}&deg;E</a>: $DIST miles
-   <li>Only aircraft below $(printf "%'.0d" $MAXALT) ft are reported.
+   <li>Maximum distance from <a href="https://www.openstreetmap.org/?mlat=$LAT&mlon=$LON#map=14/$LAT/$LON&layers=H" target=_blank>${LAT}&deg;N, ${LON}&deg;E</a>: $DISPLAYDIST $DISPLAYUNIT
+   <li>Only aircraft below $(printf "%'.0d" $MAXALT) $ALTUNIT are reported.
    <li>Data extracted from $(printf "%'.0d" $CURRCOUNT) <a href="https://en.wikipedia.org/wiki/Automatic_dependent_surveillance_%E2%80%93_broadcast" target="_blank">ADS-B messages</a> received since midnight today.
    <li>Click on the flight number to see the full flight information/history
 EOF
@@ -540,7 +637,7 @@ then
 	   <li>This data is for informational purposes only and is of indicative value only. It was collected using a non-calibrated device under uncontrolled circumstances.
 	   <li>The data unit is &quot;dBFS&quot; (Decibels-Full Scale). 0 dBFS is the loudest sound the device can capture. Lower values, like -99 dBFS, mean very low noise. Higher values, like -10 dBFS, are very loud.
 	   <li>The system measures the <a href="https://en.wikipedia.org/wiki/Root_mean_square" target="_blank">RMS</a> of the sound level for contiguous periods of 5 seconds.
-	   <li>'Loudness' is the difference (in dB) between the Peak RMS Sound and the 1 hour average. It provides an indication of how much louder than normal it was when the aircraft flew over.
+	   <li>'Loudness' is the difference (in dB) between the Peak RMS Sound and the 10 minutes average. It provides an indication of how much louder than normal it was when the aircraft flew over.
 	   <li>Loudness values of greater than $YELLOWLIMIT dB are in red. Values greater than $GREENLIMIT dB are in yellow.
 	   <li>'Peak RMS Sound' is the highest measured 5-seconds RMS value during the time the aircraft was in the coverage area.
 	   <li>The subsequent values are 1, 5, 10, and 60 minutes averages of these 5 second RMS measurements for the period leading up to the moment the aircraft left the coverage area.
