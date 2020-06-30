@@ -248,12 +248,29 @@ EOF
 				NOISEGRAPHLINK="$NOISEGRAPHBASE-$(date -d "${NEWVALUES[2]}" +%H%M%S)-"${NEWVALUES[0]}".png"
 				NOISEGRAPHFILE="$OUTFILEDIR"/"$NOISEGRAPHLINK"
 				[ "${NEWVALUES[1]:0:1}" == "@" ] && TITLE="Noise plot for ${NEWVALUES[1]:1} at ${NEWVALUES[3]}" || TITLE="Noise plot for ${NEWVALUES[1]} at ${NEWVALUES[3]}"
+
+				STARTTIME=$(date +%s -d "${NEWVALUES[2]}")
+				ENDTIME=$(date +%s -d "${NEWVALUES[3]}")
+				LOG "SpectroFile between $STARTTIME and $ENDTIME"
+
+				# determine the name of a potential spectrogram file
+				SPECTROFILE=noisecapt-spectro-$(date -d @`awk -F, -v a=$STARTTIME -v b=$ENDTIME 'BEGIN{c=-999; d=0}{if ($1>=0+a && $1<=1+b && $2>0+c) {c=$2; d=$1}} END{print d}' /tmp/noisecapt-$FENCEDATE.log` +%y%m%d-%H%M%S).png
+				LOG "SPECTROFILE (before copying) is $TMPDIR/$SPECTROFILE"
+				if [ -f "$TMPDIR/$SPECTROFILE" ] && [ ! -f "$OUTFILEDIR/$SPECTROFILE" ]
+				then
+					cp -f "$TMPDIR/$SPECTROFILE" "$OUTFILEDIR/$SPECTROFILE"
+					LOG "Copied SpectroFile from $TMPDIR/$SPECTROFILE to $OUTFILEDIR/$SPECTROFILE"
+				else
+					[ ! -f "$OUTFILEDIR/$SPECTROFILE" ] && LOG "Didnt copy Spectrofile - doesnt exist at origin"
+					[ -f "$TMPDIR/$SPECTROFILE" ] && LOG "Didnt copy SpectroFile - already exists at $OUTFILEDIR/$SPECTROFILE"
+				fi
+
 				# generate noisegraph if it doesnt already exist
 				if [ ! -f "$NOISEGRAPHFILE" ] && [ $(( $(date +%s) - $(date -d "${NEWVALUES[3]}" +%s) )) -gt 300 ]
 				then
-					LOG "Invoking GnuPlot!"
-					# LOG "gnuplot -e offset=$(echo "`date +%z` * 36" | bc) -e start=$(date +%s -d '${NEWVALUES[2]}') -e end=$(date +%s -d '${NEWVALUES[3]}') -e infile=/tmp/noisecapt-$FENCEDATE.log -e outfile=$NOISEGRAPHFILE -e plottitle='$TITLE' -e margin=60 $PLANEFENCEDIR/noiseplot.gnuplot"
-					gnuplot -e "offset=$(echo "`date +%z` * 36" | bc); start=$(date +%s -d "${NEWVALUES[2]}"); end=$(date +%s -d "${NEWVALUES[3]}"); infile='/tmp/noisecapt-$FENCEDATE.log'; outfile='"$NOISEGRAPHFILE"'; plottitle='$TITLE'; margin=60" $PLANEFENCEDIR/noiseplot.gnuplot
+					LOG "Invoking GnuPlot with START=$STARTTIME END=$ENDTIME"
+					gnuplot -e "offset=$(echo "`date +%z` * 36" | bc); start=$STARTTIME; end=$ENDTIME; infile='/tmp/noisecapt-$FENCEDATE.log'; outfile='"$NOISEGRAPHFILE"'; plottitle='$TITLE'; margin=60" $PLANEFENCEDIR/noiseplot.gnuplot
+					LOG "SPECTROFILE=$SPECTROFILE"
 				else
 					LOG "Didnt write graph. Reason:"
 					[ -f "$NOISEGRAPHFILE" ] && LOG "$NOISEGRAPHFILE exists" || LOG "$NOISEGRAPHFILE doesn't exist"
@@ -299,6 +316,15 @@ EOF
                                 fi
 
 			fi
+
+			if [ -f "$OUTFILEDIR/$SPECTROFILE" ]
+			then
+				printf "<td><A href=\"%s\" target=\"_new\">Spectrogram</a></td>\n" "$SPECTROFILE" >>"$2"
+				LOG "SpectroFile exists, added link to table"
+			else
+				LOG "SpectroFile doesnt exist, no link added to table"
+			fi
+
 			printf "</tr>\n" >>"$2"
 		fi
 	    fi

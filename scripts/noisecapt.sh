@@ -85,16 +85,20 @@ do
         	LOG "Yesterday log doesnt exist"
 	fi
 
+        AUDIOTIME=$(date +%s)
+
         # capture audio and put the results in an array
         # All dB levels are dBFS, or dB where the loudest (="full scale") is 0 dB
-        RMSREC="$(arecord -D hw:$CARD,$DEVICE -d $CAPTURETIME --fatal-errors --buffer-size=192000 -f dat -t raw -c 1 --quiet | sox -V -t raw -b 16 -r 48 -c 1 -e signed-integer - -t raw -b 16 -r 48 -c 1 /dev/null stats 2>&1 | grep 'RMS lev dB')"
+
+        # RMSREC="$(arecord -D hw:$CARD,$DEVICE -d $CAPTURETIME --fatal-errors --buffer-size=192000 -f dat -t raw -c 1 --quiet | sox -V -t raw -b 16 -r 48 -c 1 -e signed-integer - -t raw -b 16 -r 48 -c 1 /dev/null stats 2>&1 | grep 'RMS lev dB')"
+        # RMSREC="$(arecord -D hw:$CARD,$DEVICE -d $CAPTURETIME --fatal-errors --buffer-size=192000 -f dat -t raw -c 1 --quiet | sox -V -t raw -b 16 -r 48000 -c 1 -e signed-integer - -t raw -b 16 -r 48000 -c 1 -e signed-integer - sinc -n 4096 1500-9000 2>/dev/null | sox -V -t raw -b 16 -r 48000 -c 1 -e signed-integer - -t raw -b 16 -r 48000 -c 1 /dev/null stats 2>&1 |grep 'RMS lev dB')"
+	RMSREC=$(arecord -D hw:1,0 -d 5 --fatal-errors --buffer-size=192000 -f dat -t raw -c 1 --quiet | sox -V -t raw -b 16 -r 48000 -c 1 -e signed-integer - -n sinc 200-10000 stats rate 16000 spectrogram -o "$OUTFILE"spectro-`date -d @$AUDIOTIME +%y%m%d-%H%M%S`.png  -Z -10 -z 60 -t "Audio Spectrogram for `date -d @$AUDIOTIME`" -c "PlaneFence (C) 2020 by Ramon F Kolb" -p 1 2>&1 | grep 'RMS lev dB')
 	IFS=' ' read -a RMS <<< "$RMSREC"
 
 	# put the dB value into LEVEL as an integer. BASH arithmatic doesn't like
 	# float values, so we need to do some trickery to convert the number:
 	LC_ALL=C printf -v LEVEL '%.0f' "${RMS[3]}"
         # LEVEL=${RMS[3]}
-        AUDIOTIME=$(date +%s)
 	LOG "Level=$LEVEL Audiotime=$AUDIOTIME"
         # capture and calculate the averages
         # determine the number of records in today's log
@@ -189,4 +193,10 @@ do
         # Now we have all the averages, we can write them to the file
         printf "%s,%s,%s,%s,%s,%s\n" "$AUDIOTIME" "$LEVEL" "$ONEMINAVG" "$FIVEMINAVG" "$TENMINAVG" "$ONEHRAVG" >> $LOGTODAY
 
+	# Link latest spectrogram to PNG file
+	ln -sf "$OUTFILE"spectro-`date -d @$AUDIOTIME +%y%m%d-%H%M%S`.png /usr/share/dump1090-fa/html/audio/spectro-latest.png
+	LOG "ln -sf "$OUTFILE"spectro-`date -d @$AUDIOTIME +%y%m%d-%H%M%S`.png /usr/share/dump1090-fa/html/audio/spectro-latest.png"
+	# Last - clean up any PNG spectrograms older than 12 hours (720 minutes):
+	find "$OUTFILE"spectro-*.png -maxdepth 1 -mmin +720 -delete
+	
 done

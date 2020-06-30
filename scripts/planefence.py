@@ -25,12 +25,13 @@ def main(argv):
    badcount=0
    calcdist = False
    linkservice = 'adsbx'
+   distunit="mi"
 
    now_utc = datetime.now(timezone('UTC'))
    now = now_utc.astimezone(get_localzone())
 
    try:
-      opts, args = getopt.getopt(argv,'',["h","help","?","distance=","lat=","long=","dist=","log=","logfile=","v","verbose","outfile=","maxalt=","calcdist","link="])
+      opts, args = getopt.getopt(argv,'',["h","help","?","distance=","lat=","long=","dist=","log=","logfile=","v","verbose","outfile=","maxalt=","calcdist","link=","distunit="])
    except getopt.GetoptError:
       print 'ERROR. Usage: distance.py [--verbose] --distance=<distance_in_km> --logfile=/path/to/logfile'
       sys.exit(2)
@@ -60,12 +61,14 @@ def main(argv):
 	 calcdist = True
       elif opt == "--link":
 	 linkservice = arg
+      elif opt == "--distunit":
+	 distunit = arg
 
    if verbose == 1:
       # print 'lat = ', lat
       # print 'lon = ', lon
-      print 'max distance = ', dist, "statute miles"
-      print 'max altitude = ', maxalt, "ft"
+      print 'max distance = ', dist, distunit
+      print 'max altitude = ', maxalt
       # print 'output is written to ', outfile
 
    if logfile == '':
@@ -79,8 +82,23 @@ def main(argv):
       print "ERROR: --link parameter must be adsbx or fa"
       sys.exit(2)
 
+   if distunit != 'km' and distunit != "nm" and distunit != "mi" and distunit != "m":
+      print "ERROR: --distunit must be one of [km|nm|mi|m]"
+      sys.exit(2)
+
    lat1 = math.radians(float(lat))
    lon1 = math.radians(float(lon))
+
+   # determine the distance conversion factor from meters to the desired unit
+   if distunit == "km":
+      distconv = 1.000
+   elif distunit == "nm":
+      distconv = 1.852
+   elif distunit == "mi":
+      distconv = 1.60934
+   elif distunit == "m":
+      distconv = 0.001
+
 
 # now we open the logfile
 # and we parse through each of the lines
@@ -100,7 +118,7 @@ def main(argv):
        # if we can't convert it into a number (e.g., it's text, not a number) then substitute it by some large number
        try:
 	  if calcdist == False:
-          	rowdist=float(row[7]) * 1.15078
+          	rowdist=float(row[7])
 	  else:
 		  # use haversine formula instead of the  distance field
 		  # this enables the use of locations other than the station itself
@@ -111,7 +129,7 @@ def main(argv):
 		  dlat = lat2 - lat1
 		  dlon = lon2 - lon1
 		  a = math.sin(dlat / 2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2)**2
-		  rowdist = 7917.5 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+		  rowdist =  12742 * math.atan2(math.sqrt(a), math.sqrt(1 - a)) / distconv
        except:
           rowdist=float("999999")
        try:
