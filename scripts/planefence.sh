@@ -193,6 +193,12 @@ EOF
 		else
 			LOG "Number of fields in CSV is $MAXFIELDS. Adding NoiseCapt table headers..."
 		fi
+
+		if (( $(ls -1 $OUTFILEDIR/noisecapt-spectro-$FENCEDATE*.png 2>/dev/null |wc -l) > 0 ))
+		then
+			printf "<th>Spectrogram</th>" >> "$2"
+		fi
+
 	else
 		LOG "Number of fields in CSV is $MAXFIELDS. Not adding NoiseCapt table headers!"
 	fi
