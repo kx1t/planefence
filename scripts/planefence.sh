@@ -571,6 +571,15 @@ then
 	printf -v DISPLAYDIST "%.1f" "$(echo "$DIST * $DISTCONV" | bc -l)"
 fi
 
+# Now let's link to the latest Spectrogram, if one was generated for today:
+
+if (( $(find $TMPDIR/noisecapt-spectro*.png -daystart -maxdepth 1 -mmin -1440 -print 2>/dev/null | wc -l  ) > 0 ))
+then
+	ln -sf $(find $TMPDIR/noisecapt-spectro*.png -daystart -maxdepth 1 -mmin -1440 -print 2>/dev/null | tail -1) $OUTFILEDIR/noisecapt-spectro-latest.png
+else
+	rm -f $OUTFILEDIR/noisecapt-spectro-latest.png 2>/dev/null
+fi
+
 # Next, we are going to print today's HTML file:
 # Note - all text between 'cat' and 'EOF' is HTML code:
 
@@ -635,13 +644,14 @@ cat <<EOF >>"$OUTFILEHTML"
 <ul>
    <li>Last update: $(date +"%b %d, %Y %R:%S %Z")
    <li>Maximum distance from <a href="https://www.openstreetmap.org/?mlat=$LAT&mlon=$LON#map=14/$LAT/$LON&layers=H" target=_blank>${LAT}&deg;N, ${LON}&deg;E</a>: $DISPLAYDIST $DISPLAYUNIT
-   <li>Only aircraft below $(printf "%'.0d" $MAXALT) $ALTUNIT are reported.
-   <li>Data extracted from $(printf "%'.0d" $CURRCOUNT) <a href="https://en.wikipedia.org/wiki/Automatic_dependent_surveillance_%E2%80%93_broadcast" target="_blank">ADS-B messages</a> received since midnight today.
-   <li>Click on the flight number to see the full flight information/history
+   <li>Only aircraft below $(printf "%'.0d" $MAXALT) $ALTUNIT are reported
+   <li>Data extracted from $(printf "%'.0d" $CURRCOUNT) <a href="https://en.wikipedia.org/wiki/Automatic_dependent_surveillance_%E2%80%93_broadcast" target="_blank">ADS-B messages</a> received since midnight today
+   <li>Click on the flight number to see the full flight information/history (from <a href="http://www.flightaware.com" target="_blank">FlightAware.com</a>)
 EOF
 
 [ "$PLANETWEET" != "" ] && printf "<li>Click on the word &quot;yes&quot; in the <b>Tweeted</b> column to see the Tweet.\n<li>Note that tweets are issued after a slight delay\n" >> "$OUTFILEHTML"
-[ "$PLANETWEET" != "" ] && printf "<li>Get notified instantaneously of planes in range by following <a href=\"http://twitter.com/%s\" target=\"_blank\">@%s</a> on Twitter!" "$PLANETWEET" "$PLANETWEET" >> "$OUTFILEHTML"
+[ "$PLANETWEET" != "" ] && printf "<li>Get notified instantaneously of aircraft in range by following <a href=\"http://twitter.com/%s\" target=\"_blank\">@%s</a> on Twitter!" "$PLANETWEET" "$PLANETWEET" >> "$OUTFILEHTML"
+(( $(find $TMPDIR/noisecapt-spectro*.png -daystart -maxdepth 1 -mmin -1440 -print 2>/dev/null | wc -l  ) > 0 )) && printf "<li>Click on the word &quot;Spectrogram&quot; to see the audio spectrogram of the noisiest period while the aircraft was in range" >> "$OUTFILEHTML"
 
 printf "</ul>" >> "$OUTFILEHTML"
 
@@ -678,6 +688,7 @@ then
 		   </details>
 		</article>
 	</section>
+	<hr/>
 EOF
 fi
 
@@ -689,21 +700,47 @@ then
 		<article>
 		   <details open>
 			<summary style="font-weight: 900; font: 14px/1.4 'Helvetica Neue', Arial, sans-serif;">Heatmap</summary>
+			<ul>
+				<li>This heatmap reflects passing frequency and does not indicate perceived noise levels
+				<li>The heatmap is limited to the coverage area of PlaneFence, for any aircraft listed in the table above
+				$( [ -d "$OUTFILEDIR/../heatmap" ] && printf "<li>For a heatmap of all planes in range of the station, please click <a href=\"../heatmap\" target=\"_blank\">here</a>" )
+			</ul>
 EOF
 	cat "$PLANEHEATHTML" >>"$OUTFILEHTML"
 	cat <<EOF >>"$OUTFILEHTML"
 		   </details>
 		</article>
 	</section>
+	<hr/>
 EOF
 fi
+
+# If there's a latest spectrogram, show it
+if [ -f "$OUTFILEDIR/noisecapt-spectro-latest.png" ]
+then
+        cat <<EOF >>"$OUTFILEHTML"
+        <section style="border: none; margin: 0; padding: 0; font: 12px/1.4 'Helvetica Neue', Arial, sans-serif;">
+                <article>
+                   <details open>
+                        <summary style="font-weight: 900; font: 14px/1.4 'Helvetica Neue', Arial, sans-serif;">Latest Spectrogram</summary>
+			<ul>
+				<li>Latest as of the time of generation of this page
+				<li>For spectrograms related to overflying aircraft, see table above
+ 			</ul>
+			<a href="noisecapt-spectro-latest.png" target="_blank"><img src="noisecapt-spectro-latest.png"></a>
+		   </details>
+	</section>
+	<hr/>
+EOF
+fi
+
 
 WRITEHTMLHISTORY "$OUTFILEDIR" "$OUTFILEHTML"
 LOG "Done writing history"
 
 cat <<EOF >>"$OUTFILEHTML"
 <div class="footer">
-PlaneFence $VERSION is part of <a href="https://github.com/kx1t/planefence" target="_blank">KX1T's PlaneFence Open Source Project</a>, available on GitHub.
+<hr/>PlaneFence $VERSION is part of <a href="https://github.com/kx1t/planefence" target="_blank">KX1T's PlaneFence Open Source Project</a>, available on GitHub.
 <br/>&copy; Copyright 2020 by Ram&oacute;n F. Kolb
 </div>
 </body>
