@@ -636,9 +636,20 @@ cat <<EOF >>"$OUTFILEHTML"
 	.history { border: none; margin: 0; padding: 0; font: 12px/1.4 "Helvetica Neue", Arial, sans-serif; }
 	.footer{ border: none; margin: 0; padding: 0; font: 8px/1.4 "Helvetica Neue", Arial, sans-serif; text-align: center }
     </style>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-171737107-1"></script>
+    <script>
+	  window.dataLayer = window.dataLayer || [];
+	  function gtag(){dataLayer.push(arguments);}
+	  gtag('js', new Date());
+
+	  gtag('config', 'UA-171737107-1');
+    </script>
 </head>
 
 <body>
+
+
 <h1>PlaneFence</h1>
 <h2>Show aircraft in range of <a href="$MYURL" target="_top">$MY</a> ADS-B PiAware station for a specific day</h2>
 <ul>
