@@ -652,12 +652,19 @@ cat <<EOF >>"$OUTFILEHTML"
 
 <h1>PlaneFence</h1>
 <h2>Show aircraft in range of <a href="$MYURL" target="_top">$MY</a> ADS-B PiAware station for a specific day</h2>
-<ul>
-   <li>Last update: $(date +"%b %d, %Y %R:%S %Z")
-   <li>Maximum distance from <a href="https://www.openstreetmap.org/?mlat=$LAT&mlon=$LON#map=14/$LAT/$LON&layers=H" target=_blank>${LAT}&deg;N, ${LON}&deg;E</a>: $DISPLAYDIST $DISPLAYUNIT
-   <li>Only aircraft below $(printf "%'.0d" $MAXALT) $ALTUNIT are reported
-   <li>Data extracted from $(printf "%'.0d" $CURRCOUNT) <a href="https://en.wikipedia.org/wiki/Automatic_dependent_surveillance_%E2%80%93_broadcast" target="_blank">ADS-B messages</a> received since midnight today
-   <li>Click on the flight number to see the full flight information/history (from <a href="http://www.flightaware.com" target="_blank">FlightAware.com</a>)
+<section style="border: none; margin: 0; padding: 0; font: 12px/1.4 'Helvetica Neue', Arial, sans-serif;">
+	<article>
+        	<details open>
+                	<summary style="font-weight: 900; font: 14px/1.4 'Helvetica Neue', Arial, sans-serif;">Executive Summary</summary>
+			<ul>
+			   <li>Last update: $(date +"%b %d, %Y %R:%S %Z")
+			   <li>Maximum distance from <a href="https://www.openstreetmap.org/?mlat=$LAT&mlon=$LON#map=14/$LAT/$LON&layers=H" target=_blank>${LAT}&deg;N, ${LON}&deg;E</a>: $DISPLAYDIST $DISPLAYUNIT
+			   <li>Only aircraft below $(printf "%'.0d" $MAXALT) $ALTUNIT are reported
+			   <li>Data extracted from $(printf "%'.0d" $CURRCOUNT) <a href="https://en.wikipedia.org/wiki/Automatic_dependent_surveillance_%E2%80%93_broadcast" target="_blank">ADS-B messages</a> received since midnight today
+			   <li>Click on the flight number to see the full flight information/history (from <a href="http://www.flightaware.com" target="_blank">FlightAware.com</a>)
+		</details>
+	</article>
+</section>
 EOF
 
 [ "$PLANETWEET" != "" ] && printf "<li>Click on the word &quot;yes&quot; in the <b>Tweeted</b> column to see the Tweet.\n<li>Note that tweets are issued after a slight delay\n" >> "$OUTFILEHTML"
