@@ -615,6 +615,15 @@ cat <<EOF >"$OUTFILEHTML"
 # If not, see https://www.gnu.org/licenses/.
 -->
 <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-171737107-1"></script>
+    <script>
+	  window.dataLayer = window.dataLayer || [];
+	  function gtag(){dataLayer.push(arguments);}
+	  gtag('js', new Date());
+
+	  gtag('config', 'UA-171737107-1');
+    </script>
     <title>ADS-B 1090 MHz PlaneFence</title>
 EOF
 
@@ -636,15 +645,6 @@ cat <<EOF >>"$OUTFILEHTML"
 	.history { border: none; margin: 0; padding: 0; font: 12px/1.4 "Helvetica Neue", Arial, sans-serif; }
 	.footer{ border: none; margin: 0; padding: 0; font: 8px/1.4 "Helvetica Neue", Arial, sans-serif; text-align: center }
     </style>
-    <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-171737107-1"></script>
-    <script>
-	  window.dataLayer = window.dataLayer || [];
-	  function gtag(){dataLayer.push(arguments);}
-	  gtag('js', new Date());
-
-	  gtag('config', 'UA-171737107-1');
-    </script>
 </head>
 
 <body>
