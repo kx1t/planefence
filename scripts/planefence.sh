@@ -662,16 +662,18 @@ cat <<EOF >>"$OUTFILEHTML"
 			   <li>Only aircraft below $(printf "%'.0d" $MAXALT) $ALTUNIT are reported
 			   <li>Data extracted from $(printf "%'.0d" $CURRCOUNT) <a href="https://en.wikipedia.org/wiki/Automatic_dependent_surveillance_%E2%80%93_broadcast" target="_blank">ADS-B messages</a> received since midnight today
 			   <li>Click on the flight number to see the full flight information/history (from <a href="http://www.flightaware.com" target="_blank">FlightAware.com</a>)
-		</details>
-	</article>
-</section>
 EOF
 
 [ "$PLANETWEET" != "" ] && printf "<li>Click on the word &quot;yes&quot; in the <b>Tweeted</b> column to see the Tweet.\n<li>Note that tweets are issued after a slight delay\n" >> "$OUTFILEHTML"
 [ "$PLANETWEET" != "" ] && printf "<li>Get notified instantaneously of aircraft in range by following <a href=\"http://twitter.com/%s\" target=\"_blank\">@%s</a> on Twitter!" "$PLANETWEET" "$PLANETWEET" >> "$OUTFILEHTML"
 (( $(find $TMPDIR/noisecapt-spectro*.png -daystart -maxdepth 1 -mmin -1440 -print 2>/dev/null | wc -l  ) > 0 )) && printf "<li>Click on the word &quot;Spectrogram&quot; to see the audio spectrogram of the noisiest period while the aircraft was in range" >> "$OUTFILEHTML"
 
-printf "</ul>" >> "$OUTFILEHTML"
+cat <<EOF >>"$OUTFILEHTML"
+			</ul>
+		</details>
+	</article>
+</section>
+EOF
 
 WRITEHTMLTABLE "$OUTFILECSV" "$OUTFILEHTML"
 
