@@ -44,6 +44,7 @@
 	LOGFILEBASE=$TMPDIR/dump1090-127_0_0_1-
 	OUTFILEBASE=$OUTFILEDIR/planefence
 	OUTFILEHTML=$OUTFILEBASE-$FENCEDATE.html
+	OUTFILEHTMTMP=$OUTFILEHTML.tmp
 	OUTFILECSV=$OUTFILEBASE-$FENCEDATE.csv
 	OUTFILETMP=$TMPDIR/dump1090-pf-temp.csv
 	PLANEHEATHTML=$OUTFILEBASE-$FENCEDATE-heatmap.html
@@ -147,16 +148,24 @@ WRITEHTMLTABLE () {
 	LOG "WRITEHTMLTABLE $1 $2 $3"
 
 	# figure out if there is NOISE data in the CSV file.
+        MAXFIELDS=0
+        TWEETCOL=1 # remember, in BASH, "0" is "true" and "!0" is "false"
+        NOISECOL=1
+
 	if [ -f "$1" ]
 	then
-		MAXFIELDS=0
 		while read -r NEWLINE
 		do
 			IFS=, read -ra RECORD <<< "$NEWLINE"
 			if (( ${#RECORD[*]} > MAXFIELDS ))
 			then
 				MAXFIELDS=${#RECORD[*]}
+				(( MAXFIELDS > 10 )) && NOISECOL=0
 			fi
+
+			# check if there is tweeted data in the CSV file
+			[ "${RECORD[1]:0:1}" == "@" ] && TWEETCOL=0
+
 		done < "$1"
 	fi
 
@@ -164,28 +173,30 @@ WRITEHTMLTABLE () {
 	then
 		printf "<html>\n<body>\n" >>"$2"
 	fi
+
 	cat <<EOF >>"$2"
-	<table border="1" class="planetable">
+	<!-- table border="1" class="planetable" -->
+	<table border="1" class="js-sort-table">
 	<tr>
-	<th>No.</th>
+	<th class="js-sort-number">No.</th>
 	<th>Transponder ID</th>
 	<th>Flight</th>
-	<th>Time First Seen</th>
-	<th>Time Last Seen</th>
-	<th>Min. Altitude</th>
-	<th>Min. Distance</th>
+	<th class="js-sort-date">Time First Seen</th>
+	<th class="js-sort-date">Time Last Seen</th>
+	<th class="js-sort-number">Min. Altitude</th>
+	<th class="js-sort-number">Min. Distance</th>
 EOF
-	if (( MAXFIELDS > 10 ))
+	if (( NOISECOL == true ))
 	then
 		cat <<EOF >>"$2"
-		<th>Loudness</th>
-		<th>Peak RMS sound</th>
-		<th>1 min avg</th>
-		<th>5 min avg</th>
-		<th>10 min avg</th>
-		<th>1 hr avg</th>
+		<th class="js-sort-number">Loudness</th>
+		<th class="js-sort-number">Peak RMS sound</th>
+		<th class="js-sort-number">1 min avg</th>
+		<th class="js-sort-number">5 min avg</th>
+		<th class="js-sort-number">10 min avg</th>
+		<th class="js-sort-number">1 hr avg</th>
 EOF
-		if (( MAXFIELDS > 12 ))
+		if (( TWEETCOL == true ))
 		then
 			# there's Twitter info in field 12
 			printf "<th>Tweeted</th>" >> "$2"
@@ -243,10 +254,10 @@ EOF
 			fi
 
 			# If MAXFIELDS>10 then there is definitely audio information.
-			if (( MAXFIELDS > 10 ))
+			if (( NOISECOL == true ))
 			then
 				# determine cell bgcolor
-				(( LOUDNESS = NEWVALUES[7] - NEWVALUES[10] ))
+				(( LOUDNESS = NEWVALUES[7] - NEWVALUES[11] ))
 				BGCOLOR="$RED"
 				((  LOUDNESS <= YELLOWLIMIT )) && BGCOLOR="$YELLOW"
 				((  LOUDNESS <= GREENLIMIT )) && BGCOLOR="$GREEN"
@@ -257,18 +268,31 @@ EOF
 
 				STARTTIME=$(date +%s -d "${NEWVALUES[2]}")
 				ENDTIME=$(date +%s -d "${NEWVALUES[3]}")
+				# if the timeframe is less than 15 seconds, extend the ENDTIME to 30 seconds
+				(( ENDTIME - STARTTIME < 30 )) && ENDTIME=$(( STARTTIME + 30 ))
+
 				LOG "SpectroFile between $STARTTIME and $ENDTIME"
 
 				# determine the name of a potential spectrogram file
 				SPECTROFILE=noisecapt-spectro-$(date -d @`awk -F, -v a=$STARTTIME -v b=$ENDTIME 'BEGIN{c=-999; d=0}{if ($1>=0+a && $1<=1+b && $2>0+c) {c=$2; d=$1}} END{print d}' /tmp/noisecapt-$FENCEDATE.log` +%y%m%d-%H%M%S).png
 				LOG "SPECTROFILE (before copying) is $TMPDIR/$SPECTROFILE"
+
+				if [ "$REMOTENOISE" != "" ]
+				then
+					# The SpectroFile is located on a remote machine. Go get it there
+					scp "$REMOTENOISE:$TMPDIR/$SPECTROFILE" "$OUTFILEDIR/$SPECTROFILE".tmp
+					mv -f "$OUTFILEDIR/$SPECTROFILE".tmp "$OUTFILEDIR/$SPECTROFILE"
+					LOG "Copied SpectroFile from remote location $REMOTENOISE:$TMPDIR/$SPECTROFILE to $OUTFILEDIR/$SPECTROFILE"
+				fi
+
 				if [ -f "$TMPDIR/$SPECTROFILE" ] && [ ! -f "$OUTFILEDIR/$SPECTROFILE" ]
 				then
 					cp -f "$TMPDIR/$SPECTROFILE" "$OUTFILEDIR/$SPECTROFILE"
 					LOG "Copied SpectroFile from $TMPDIR/$SPECTROFILE to $OUTFILEDIR/$SPECTROFILE"
+
 				else
-					[ ! -f "$OUTFILEDIR/$SPECTROFILE" ] && LOG "Didnt copy Spectrofile - doesnt exist at origin"
-					[ -f "$TMPDIR/$SPECTROFILE" ] && LOG "Didnt copy SpectroFile - already exists at $OUTFILEDIR/$SPECTROFILE"
+					[ ! -f "$OUTFILEDIR/$SPECTROFILE" ] && LOG "Didnt (local) copy Spectrofile - doesnt exist at origin"
+					[ -f "$TMPDIR/$SPECTROFILE" ] && LOG "Didnt (local) copy SpectroFile - already exists at $OUTFILEDIR/$SPECTROFILE"
 				fi
 
 				# generate noisegraph if it doesnt already exist
@@ -291,10 +315,12 @@ EOF
 				else
 					printf "<td style=\"background-color: %s\">%s dB</td>\n" "$BGCOLOR" "$LOUDNESS" >>"$2"
 				fi
+
 				for i in {7..11}
 				do
 					printf "<td>%s dBFS</td>\n" "${NEWVALUES[i]}" >>"$2"
 				done
+
 				if [ "${NEWVALUES[1]:0:1}" == "@" ]
 				then
 					# a tweet was sent. If there is info in field 12, then put a link, otherwise simple say "yes"
@@ -305,8 +331,12 @@ EOF
 					else
 						printf "<td>yes</td>\n" >> "$2"
 					fi
+                                elif (( TWEETCOL == true ))
+                                then
+                                        printf "<td></td>\n" >> "$2"
 				fi
 			else
+				# else there was no audio information.
 				# figure out if there's tweet information:
                                 if [ "${NEWVALUES[1]:0:1}" == "@" ]
                                 then
@@ -319,8 +349,10 @@ EOF
                                         else
                                                 printf "<td>yes</td>\n" >> "$2"
                                         fi
+				elif (( TWEETCOL == true ))
+				then
+					printf "<td></td>\n" >> "$2"
                                 fi
-
 			fi
 
 			if [ -f "$OUTFILEDIR/$SPECTROFILE" ]
@@ -396,7 +428,7 @@ LOG "FENCEDATE=$FENCEDATE"
 if [ "$1" != "" ]
 then
 	rm "$TMPLINES"  2>/dev/null
-	rm "$OUTFILEHTML"  2>/dev/null
+	rm "$OUTFILEHTMTMP"  2>/dev/null
 	rm "$OUTFILECSV"  2>/dev/null
 	rm $OUTFILEBASE-"$FENCEDATE"-table.html  2>/dev/null
 	rm $OUTFILETMP  2>/dev/null
@@ -518,7 +550,7 @@ fi
 [ -f "$OUTFILECSV" ] && LOG "After: CSV file has $(wc -l "$OUTFILECSV" |cut -d ' ' -f 1) lines"
 [ -f "$OUTFILECSV" ] && LOG "After: last line of CSV file: $(tail --lines=1 "$OUTFILECSV")"
 
-# now we can stitching the CSV file together:
+# now we can stitch the CSV file together:
 if [ -f "$OUTFILETMP" ]
 then
 	LOG "After: New PlaneFence file has $(wc -l "$OUTFILETMP" |cut -d ' ' -f 1) lines"
@@ -531,7 +563,7 @@ else
 fi
 
 # Now check if we need to add noise data to the csv file
-if [ "$NOISECAPT" == "1" ]
+if [ "$NOISECAPT" == "1" ] || [ "$REMOTENOISE" != "" ]
 then
 	LOG "Invoking noise2fence!"
 	$PLANEFENCEDIR/noise2fence.sh
@@ -573,7 +605,13 @@ fi
 
 # Now let's link to the latest Spectrogram, if one was generated for today:
 
-if (( $(find $TMPDIR/noisecapt-spectro*.png -daystart -maxdepth 1 -mmin -1440 -print 2>/dev/null | wc -l  ) > 0 ))
+if [ "$REMOTENOISE" != "" ]
+then
+	# get the latest spectrogram from the remote server
+	scp -q $REMOTENOISE:$TMPDIR/noisecapt-spectro-latest.png $OUTFILEDIR/noisecapt-spectro-latest.png.tmp
+	mv -f $OUTFILEDIR/noisecapt-spectro-latest.png.tmp $OUTFILEDIR/noisecapt-spectro-latest.png
+
+elif (( $(find $TMPDIR/noisecapt-spectro*.png -daystart -maxdepth 1 -mmin -1440 -print 2>/dev/null | wc -l  ) > 0 ))
 then
 	ln -sf $(find $TMPDIR/noisecapt-spectro*.png -daystart -maxdepth 1 -mmin -1440 -print 2>/dev/null | tail -1) $OUTFILEDIR/noisecapt-spectro-latest.png
 else
@@ -583,7 +621,7 @@ fi
 # Next, we are going to print today's HTML file:
 # Note - all text between 'cat' and 'EOF' is HTML code:
 
-cat <<EOF >"$OUTFILEHTML"
+cat <<EOF >"$OUTFILEHTMTMP"
 <!DOCTYPE html>
 <html>
 <!--
@@ -624,18 +662,19 @@ cat <<EOF >"$OUTFILEHTML"
 
 	  gtag('config', 'UA-171737107-1');
     </script>
+    <script type="text/javascript" src="sort-table.js"></script>
     <title>ADS-B 1090 MHz PlaneFence</title>
 EOF
 
 if [ -f "$PLANEHEATHTML" ]
 then
-     cat <<EOF >>"$OUTFILEHTML"
+     cat <<EOF >>"$OUTFILEHTMTMP"
      <link rel="stylesheet" href="leaflet.css" />
      <script src="leaflet.js"></script>
 EOF
 fi
 
-cat <<EOF >>"$OUTFILEHTML"
+cat <<EOF >>"$OUTFILEHTMTMP"
     <style>
         body { font: 12px/1.4 "Helvetica Neue", Arial, sans-serif; }
         a { color: #0077ff; }
@@ -661,23 +700,15 @@ cat <<EOF >>"$OUTFILEHTML"
 			   <li>Maximum distance from <a href="https://www.openstreetmap.org/?mlat=$LAT&mlon=$LON#map=14/$LAT/$LON&layers=H" target=_blank>${LAT}&deg;N, ${LON}&deg;E</a>: $DISPLAYDIST $DISPLAYUNIT
 			   <li>Only aircraft below $(printf "%'.0d" $MAXALT) $ALTUNIT are reported
 			   <li>Data extracted from $(printf "%'.0d" $CURRCOUNT) <a href="https://en.wikipedia.org/wiki/Automatic_dependent_surveillance_%E2%80%93_broadcast" target="_blank">ADS-B messages</a> received since midnight today
-			   <li>Click on the flight number to see the full flight information/history (from <a href="http://www.flightaware.com" target="_blank">FlightAware.com</a>)
 EOF
 
-[ "$PLANETWEET" != "" ] && printf "<li>Click on the word &quot;yes&quot; in the <b>Tweeted</b> column to see the Tweet.\n<li>Note that tweets are issued after a slight delay\n" >> "$OUTFILEHTML"
-[ "$PLANETWEET" != "" ] && printf "<li>Get notified instantaneously of aircraft in range by following <a href=\"http://twitter.com/%s\" target=\"_blank\">@%s</a> on Twitter!" "$PLANETWEET" "$PLANETWEET" >> "$OUTFILEHTML"
-(( $(find $TMPDIR/noisecapt-spectro*.png -daystart -maxdepth 1 -mmin -1440 -print 2>/dev/null | wc -l  ) > 0 )) && printf "<li>Click on the word &quot;Spectrogram&quot; to see the audio spectrogram of the noisiest period while the aircraft was in range" >> "$OUTFILEHTML"
 
-cat <<EOF >>"$OUTFILEHTML"
+cat <<EOF >>"$OUTFILEHTMTMP"
 			</ul>
 		</details>
 	</article>
 </section>
-EOF
 
-WRITEHTMLTABLE "$OUTFILECSV" "$OUTFILEHTML"
-
-cat <<EOF >>"$OUTFILEHTML"
         <section style="border: none; margin: 0; padding: 0; font: 12px/1.4 'Helvetica Neue', Arial, sans-serif;">
                 <article>
                    <details>
@@ -685,12 +716,34 @@ cat <<EOF >>"$OUTFILEHTML"
 		   </details>
 		</article>
 	</section>
+
+	<section style="border: none; margin: 0; padding: 0; font: 12px/1.4 'Helvetica Neue', Arial, sans-serif;">
+       	   <article>
+             <details open>
+                        <summary style="font-weight: 900; font: 14px/1.4 'Helvetica Neue', Arial, sans-serif;">Flights In Range Table</summary>
+			<ul>
+				   <li>Click on the flight number to see the full flight information/history (from <a href="http://www.flightaware.com" target="_blank">FlightAware.com</a>)
+EOF
+
+[ "$PLANETWEET" != "" ] && printf "<li>Click on the word &quot;yes&quot; in the <b>Tweeted</b> column to see the Tweet.\n<li>Note that tweets are issued after a slight delay\n" >> "$OUTFILEHTMTMP"
+[ "$PLANETWEET" != "" ] && printf "<li>Get notified instantaneously of aircraft in range by following <a href=\"http://twitter.com/%s\" target=\"_blank\">@%s</a> on Twitter!\n" "$PLANETWEET" "$PLANETWEET" >> "$OUTFILEHTMTMP"
+(( $(find $TMPDIR/noisecapt-spectro*.png -daystart -maxdepth 1 -mmin -1440 -print 2>/dev/null | wc -l  ) > 0 )) && printf "<li>Click on the word &quot;Spectrogram&quot; to see the audio spectrogram of the noisiest period while the aircraft was in range\n" >> "$OUTFILEHTMTMP"
+
+printf "<li> Press the header of any of the columns to sort by that column.\n"  >> "$OUTFILEHTMTMP"
+printf "</ul>\n"  >> "$OUTFILEHTMTMP"
+
+WRITEHTMLTABLE "$OUTFILECSV" "$OUTFILEHTMTMP"
+
+cat <<EOF >>"$OUTFILEHTMTMP"
+                   </details>
+                </article>
+        </section>
 EOF
 
 # Write some extra text if NOISE data is present
 if (( MAXFIELDS > 7 ))
 then
-	cat <<EOF >>"$OUTFILEHTML"
+	cat <<EOF >>"$OUTFILEHTMTMP"
 	<section style="border: none; margin: 0; padding: 0; font: 12px/1.4 'Helvetica Neue', Arial, sans-serif;">
 		<article>
 		   <details>
@@ -699,7 +752,7 @@ then
 	   <li>This data is for informational purposes only and is of indicative value only. It was collected using a non-calibrated device under uncontrolled circumstances.
 	   <li>The data unit is &quot;dBFS&quot; (Decibels-Full Scale). 0 dBFS is the loudest sound the device can capture. Lower values, like -99 dBFS, mean very low noise. Higher values, like -10 dBFS, are very loud.
 	   <li>The system measures the <a href="https://en.wikipedia.org/wiki/Root_mean_square" target="_blank">RMS</a> of the sound level for contiguous periods of 5 seconds.
-	   <li>'Loudness' is the difference (in dB) between the Peak RMS Sound and the 10 minutes average. It provides an indication of how much louder than normal it was when the aircraft flew over.
+	   <li>'Loudness' is the difference (in dB) between the Peak RMS Sound and the 1 hour average. It provides an indication of how much louder than normal it was when the aircraft flew over.
 	   <li>Loudness values of greater than $YELLOWLIMIT dB are in red. Values greater than $GREENLIMIT dB are in yellow.
 	   <li>'Peak RMS Sound' is the highest measured 5-seconds RMS value during the time the aircraft was in the coverage area.
 	   <li>The subsequent values are 1, 5, 10, and 60 minutes averages of these 5 second RMS measurements for the period leading up to the moment the aircraft left the coverage area.
@@ -715,7 +768,7 @@ fi
 # if $PLANEHEATHTML exists, then add the heatmap
 if [ -f "$PLANEHEATHTML" ]
 then
-	cat <<EOF >>"$OUTFILEHTML"
+	cat <<EOF >>"$OUTFILEHTMTMP"
 	<section style="border: none; margin: 0; padding: 0; font: 12px/1.4 'Helvetica Neue', Arial, sans-serif;">
 		<article>
 		   <details open>
@@ -726,8 +779,8 @@ then
 				$( [ -d "$OUTFILEDIR/../heatmap" ] && printf "<li>For a heatmap of all planes in range of the station, please click <a href=\"../heatmap\" target=\"_blank\">here</a>" )
 			</ul>
 EOF
-	cat "$PLANEHEATHTML" >>"$OUTFILEHTML"
-	cat <<EOF >>"$OUTFILEHTML"
+	cat "$PLANEHEATHTML" >>"$OUTFILEHTMTMP"
+	cat <<EOF >>"$OUTFILEHTMTMP"
 		   </details>
 		</article>
 	</section>
@@ -738,7 +791,7 @@ fi
 # If there's a latest spectrogram, show it
 if [ -f "$OUTFILEDIR/noisecapt-spectro-latest.png" ]
 then
-        cat <<EOF >>"$OUTFILEHTML"
+        cat <<EOF >>"$OUTFILEHTMTMP"
         <section style="border: none; margin: 0; padding: 0; font: 12px/1.4 'Helvetica Neue', Arial, sans-serif;">
                 <article>
                    <details open>
@@ -755,10 +808,10 @@ EOF
 fi
 
 
-WRITEHTMLHISTORY "$OUTFILEDIR" "$OUTFILEHTML"
+WRITEHTMLHISTORY "$OUTFILEDIR" "$OUTFILEHTMTMP"
 LOG "Done writing history"
 
-cat <<EOF >>"$OUTFILEHTML"
+cat <<EOF >>"$OUTFILEHTMTMP"
 <div class="footer">
 <hr/>PlaneFence $VERSION is part of <a href="https://github.com/kx1t/planefence" target="_blank">KX1T's PlaneFence Open Source Project</a>, available on GitHub.
 <br/>&copy; Copyright 2020 by Ram&oacute;n F. Kolb
@@ -767,7 +820,8 @@ cat <<EOF >>"$OUTFILEHTML"
 </html>
 EOF
 
-# Last thing we need to do, is repoint INDEX.HTML to today's file
+# Last things we need to do, are to move the TMP file to the real HTML file and to repoint INDEX.HTML to today's file
+mv -f "$OUTFILEHTMTMP" "$OUTFILEHTML"
 ln -sf "$OUTFILEHTML" $OUTFILEDIR/index.html
 
 # That's all
