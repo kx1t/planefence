@@ -13,8 +13,8 @@ def main(argv):
 
    inputfile = ''
    outputfile = ''
-   lat = 42.3966
-   lon = -71.1773
+   lat = 40
+   lon = -70
    dist = 2
    verbose = 0
    maxalt = 99999
@@ -30,7 +30,7 @@ def main(argv):
    now = now_utc.astimezone(get_localzone())
 
    try:
-      opts, args = getopt.getopt(argv,'',["h","help","?","distance=","lat=","long=","dist=","log=","logfile=","v","verbose","outfile=","maxalt=","calcdist","link="])
+      opts, args = getopt.getopt(argv,'',["h","help","?","distance=","lat=","lon=","dist=","log=","logfile=","v","verbose","outfile=","maxalt=","calcdist","link="])
    except getopt.GetoptError:
       print 'ERROR. Usage: distance.py [--verbose] --distance=<distance_in_km> --logfile=/path/to/logfile'
       sys.exit(2)
