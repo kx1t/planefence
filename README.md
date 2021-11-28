@@ -6,6 +6,14 @@ For an example, see http://planefence.ramonk.net
 
 This documentation is for PlaneFence v3.12. For a summary of changes since v1, see at the end of this document. (There was no publicly released PlaneFence v2.)
 
+
+# DO NOT USE THIS REPO. IT HAS BEEN ABANDONED AND SUPERSEDED
+The "kx1t/planefence" repo has been abandoned and superseded by [kx1t/docker-planefence](https://github.com/kx1t/docker-planefence). It hasn't been updated in ages, and it's no longer supported by the author.
+
+Instead, please use the Containerized version linked above, which is a lot easier to install, configure, and maintain.
+
+The repository you are currently browsing is left in place for reference and historical purposes only.
+
 ## Attributions, inclusions, and prerequisites
 
 1. You must have a Raspberry Pi with a working version of dump1090, dump1090-fa, dump1090-mutability, or the equivalent dump978 versions installed. If you don't have this, stop right here. It makes no sense to continue unless you understand the basic functions of the ADSB receiver for Raspberry Pi
@@ -33,7 +41,7 @@ So, please stick with user `pi`.
 You can automatically install and configure PlaneFence by logging into your Raspberry Pi as user `pi`, and then copying / pasting the following line:
 
 ```
-bash -c "$(wget -q -O - https://raw.githubusercontent.com/kx1t/planefence/master/install_planefence.sh)"
+bash -c "wget -q -O - https://raw.githubusercontent.com/kx1t/planefence/master/install_planefence.sh"
 ```
 
 Note -- if `dump1090.socket30003` isn't already installed and running, this install script will also attempt to install that package.
